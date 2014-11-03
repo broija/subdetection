@@ -17,6 +17,9 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*!
+Simple test file for subdetection library.
+*/
 
 #include <iostream>
 #include "opencv2/highgui/highgui.hpp"
@@ -32,114 +35,138 @@
 #include "detector.h"
 #include "parametermanager.h"
 
-using namespace cv;
-using namespace std;
+struct CallbackHelper
+{
+    cv::Mat mat;
+    SubDetection::Detector detector;
+};//CallbackHelper
 
-void canny_callback(int, void * _pDetector);
-
-Mat imgOriginal;
-Mat imgThresholded;
-Mat imgGray;
-Mat imgMasked;
-int max_thresh = 255;
-int ratio = 4;
-int max_ratio = 5;
-int kernel_size = 3;
+void canny_callback(int, void * _pHelper);
 
 int main(int argc, char** argv)
 {
-//    Logger logger(true,false);
     SubDetection::init();//Init first!
-    if (argc != 2)
+
+    SubDetection::ParameterManager paramManager;
+    CallbackHelper callbackHelper;
+
+    const char * image_filename;
+    const char * config_filename = "params.ini";
+
+    bool paramsLoaded = false;
+
+    switch (argc)
     {
-        std::cerr << "Image file name must be passed as first and only argument." << std::endl;
+    default:
+    case 3:
+        config_filename = argv[2];
+        paramsLoaded = paramManager.loadSettings(config_filename);
+
+        if (!paramsLoaded)
+        {
+            std::cout << "Error while loading config file." << std::endl;
+        }//if (!paramsLoaded)
+
+        //no break
+    case 2:
+        image_filename = argv[1];
+
+        callbackHelper.mat = cv::imread(image_filename,1);
+
+        if (callbackHelper.mat.data == NULL)
+        {
+            std::cerr << "Image could not be read." << std::endl;
+            return 2;
+        }//if (callbackHelper.mat.data == NULL)
+
+        break;
+    case 1:
+        std::cerr << "Image file name must be passed as first and mandatory argument. Config file is an optional, second argument." << std::endl;
         return 1;
-    }//if (argc != 2)
+    }//switch (argc)
 
-    const char * filename = argv[1];
+    cv::namedWindow("Control", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("Original",cv::WINDOW_NORMAL);
 
-    namedWindow("Control", CV_WINDOW_AUTOSIZE);
-    namedWindow("Original",WINDOW_NORMAL);
-//    namedWindow("Threshold",WINDOW_NORMAL);
-//    namedWindow("Edges",WINDOW_NORMAL);
-//    namedWindow("Masked",WINDOW_NORMAL);
+    SubDetection::Parameters * pParams = 0;
 
-    SubDetection::Parameters params;
-
-    params.hsvMin.setHue(20);
-    params.hsvMax.setHue(32);
-
-    params.hsvMin.setSaturation(155);
-    params.hsvMax.setSaturation(255);
-
-    params.hsvMin.setValue(160);
-    params.hsvMax.setValue(255);
-
-    params.charMaxSize = Size(20,20);
-    params.yTolerance = params.charMaxSize.height;
-    params.xTolerance = 25;
-
-    imgOriginal = imread(filename,1);
-
-    if (imgOriginal.data == NULL)
+    if (paramsLoaded)
     {
-        std::cerr << "Image could not be read." << std::endl;
-        return 2;
-    }//if (imgOriginal.data == NULL)
+        pParams = &paramManager.parameters();
+    }//if (paramsLoaded)
+    else
+    {
+        pParams = new SubDetection::Parameters();
+
+        pParams->hsvMin.setHue(20);
+        pParams->hsvMax.setHue(32);
+
+        pParams->hsvMin.setSaturation(155);
+        pParams->hsvMax.setSaturation(255);
+
+        pParams->hsvMin.setValue(160);
+        pParams->hsvMax.setValue(255);
+
+        pParams->charMaxSize = cv::Size(20,20);
+        pParams->yTolerance = pParams->charMaxSize.height;
+        pParams->xTolerance = 25;
+
+        int x, y, width, height;
+
+        x = static_cast<int>(callbackHelper.mat.cols * 0.10);
+        y = static_cast<int>(callbackHelper.mat.rows * 0.85);
+        width = static_cast<int>(callbackHelper.mat.cols * 0.8);
+        height = static_cast<int>(callbackHelper.mat.rows * 0.15);
+
+        pParams->zone = cv::Rect(x,y,width,height);
+        pParams->thresh = 65;
+    }//if (paramsLoaded)...else
 
     std::cout << "Use Canny trackbar to detect text." << std::endl
               << "Be sure that all detection parameters fit the type of subtitle in your image." << std::endl
               << "A window should pop with a blue rectangle, representing the detection zone." << std::endl
               << "If text has been detected, you should see red rectangles in this blue rectangle." << std::endl;
 
-    int x = static_cast<int>(imgOriginal.cols * 0.10),
-        y = static_cast<int>(imgOriginal.rows * 0.85),
-        width = static_cast<int>(imgOriginal.cols * 0.8),
-        height = static_cast<int>(imgOriginal.rows * 0.15);
+    std::cout << "Text detection zone: "
+              << "x:" << pParams->zone.x << ", "
+              << "y:" << pParams->zone.y << ", "
+              << "w:" << pParams->zone.width << ", "
+              << "h:" << pParams->zone.height << std::endl;
 
-    std::cout << "x:" << x << ", "
-              << "y:" << y << ", "
-              << "w:" << width << ", "
-              << "h:" << height << std::endl;
+    callbackHelper.detector.setParameters(*pParams);
 
-    params.zone = Rect(x,y,width,height);
-    params.thresh = 65;
-
-    SubDetection::Detector detector(params);
-
-    createTrackbar("Canny:", "Control", &(params.thresh), max_thresh, canny_callback, &detector );
-    imshow("Original", imgOriginal); //show the original image
+    cv::createTrackbar("Canny:", "Control", &(pParams->thresh), 255, canny_callback, &callbackHelper);
+    cv::imshow("Original", callbackHelper.mat); //show the original image
 
     bool end = false;
 
     while (!end)
     {
-        int key = waitKey(500);
+        int key = cv::waitKey(500);
 
         switch (key)
         {
         case 27:
             end = true;
             break;
-        //Put your own key behaviour here...
+        //Put your own key behaviours here...
         }//switch (key)
     }//while (!end)
 
-    SubDetection::ParameterManager paramManager(params);
-    paramManager.saveSettings("params.ini");
+    paramManager.saveSettings(config_filename);
 
     return 0;
 }//main
 
 //---------------------------------------------------------------------------
 
-void canny_callback(int, void * _pDetector)
+void canny_callback(int, void * _pHelper)
 {
-    SubDetection::Detector * pDetector = (SubDetection::Detector *)_pDetector;
+    CallbackHelper * pHelper = (CallbackHelper *)_pHelper;
 
     QStringList textLines;
 
-    pDetector->detect(imgOriginal,textLines);
+    pHelper->detector.detect(pHelper->mat,textLines);
 
     int lineIndex = 0;
 
@@ -149,6 +176,8 @@ void canny_callback(int, void * _pDetector)
         ++lineIndex;
     }//foreach (QString textLine, textLines)
 }//canny_callback
+
+//---------------------------------------------------------------------------
 
 
 
