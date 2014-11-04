@@ -26,6 +26,8 @@ TEMPLATE = lib
 DEFINES += SUBDETECTION_LIBRARY
 DEFINES += _tagBLOB_DEFINED
 
+#DEFINES += DEEP_DEBUG
+
 PROJECT_DIR = D:/prog/c++/projets
 IMAGE_PROCESSING_DIR = D:/prog/traitement_image
 
