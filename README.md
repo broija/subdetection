@@ -38,7 +38,7 @@ Instructions
 ------------
 
 Text detection
-..............
+______________
 
 *Detector* usage is quite straightforward:
  - Pass it the desired parameters using one of its constructors or calling *setParameters*.
@@ -47,7 +47,7 @@ Text detection
 If text has been detected, you'll find it in the QStringList passed as parameter.
 
 Language files
-..............
+______________
 
 Tesseract language files can be used by putting them in a **tessdata** directory.
 
