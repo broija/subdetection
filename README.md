@@ -34,6 +34,30 @@ Parameters
  - *yTolerance* is the maximum spacing between characters on a line along Y axis.
  - *matchRatio* represents the similariy of the "cleaned" text zones between consecutively loaded images. The closer from 0, the more similar.
 
+Instructions
+------------
+
+Text detection
+..............
+
+*Detector* usage is quite straightforward:
+ - Pass it the desired parameters using one of its constructors or calling *setParameters*.
+ - Then simply call *detect*.
+ 
+If text has been detected, you'll find it in the QStringList passed as parameter.
+
+Language files
+..............
+
+Tesseract language files can be used by putting them in a **tessdata** directory.
+
+Then, instantiate a *Detector* and pass it **tessdata** parent directory path
+and the three characters refering to your language files.
+
+You can download language files here:
+
+https://code.google.com/p/tesseract-ocr/downloads/list
+
 Tests
 -----
 

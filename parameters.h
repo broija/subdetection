@@ -40,8 +40,8 @@ struct SUBDETECTIONSHARED_EXPORT Parameters
                  yTolerance(0),
                  matchRatio(0.05){}
 
-    Hsv hsvMax;
     Hsv hsvMin;
+    Hsv hsvMax;
 
     Rect zone;///< Subtitle zone.
 

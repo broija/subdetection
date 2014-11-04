@@ -121,7 +121,7 @@ Detector::Detector(const Parameters & _params):
  * \brief Detector::Detector
  * \param _pParams : a pointer to a Parameters structure.
  * \param _tessdataParentPath : tesseract "tessdata" parent directory.
- * \param _lang
+ * \param _lang : language. Be sure that corresponding language files are available in tessdata directory.
  */
 Detector::Detector(Parameters * _pParams, const QString & _tessdataParentPath, const QString & _lang):
     m_drawBoundings(false),
@@ -129,6 +129,19 @@ Detector::Detector(Parameters * _pParams, const QString & _tessdataParentPath, c
 {
     setParameters(_pParams);
 }//Detector Parameters *, const QString &, const QString &
+
+//-------------------------
+
+/*!
+ * \brief Detector::Detector
+ * \param _tessdataParentPath : tesseract "tessdata" parent directory.
+ * \param _lang : language. Be sure that corresponding language files are available in tessdata directory.
+ */
+Detector::Detector(const QString & _tessdataParentPath, const QString & _lang):
+    m_drawBoundings(false),
+    m_ocr(_tessdataParentPath,_lang)
+{
+}//Detector const QString &, const QString &
 
 //-------------------------
 

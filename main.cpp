@@ -37,6 +37,9 @@ Simple test file for subdetection library.
 
 struct CallbackHelper
 {
+    CallbackHelper(){}
+    CallbackHelper(const QString & _tessdataParentPath, const QString & _lang):detector(_tessdataParentPath,_lang){}
+
     cv::Mat mat;
     SubDetection::Detector detector;
 };//CallbackHelper
@@ -48,7 +51,8 @@ int main(int argc, char** argv)
     SubDetection::init();//Init first!
 
     SubDetection::ParameterManager paramManager;
-    CallbackHelper callbackHelper;
+//    CallbackHelper callbackHelper;
+    CallbackHelper callbackHelper(".","eng");
 
     const char * image_filename;
     const char * config_filename = "params.ini";
@@ -133,7 +137,7 @@ int main(int argc, char** argv)
               << "w:" << pParams->zone.width << ", "
               << "h:" << pParams->zone.height << std::endl;
 
-    callbackHelper.detector.setParameters(*pParams);
+    callbackHelper.detector.setParameters(pParams);
 
     cv::createTrackbar("Canny:", "Control", &(pParams->thresh), 255, canny_callback, &callbackHelper);
     cv::imshow("Original", callbackHelper.mat); //show the original image

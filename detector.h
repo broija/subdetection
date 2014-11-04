@@ -42,6 +42,7 @@ public:
     Detector(Parameters * _pParams);
     Detector(const Parameters & _params);
     Detector(Parameters * _pParams, const QString & _tessdataParentPath, const QString & _lang);
+    Detector(const QString & _tessdataParentPath, const QString & _lang);
 
     void setParameters(Parameters * _pParams);///< Detector parameters will point directly to passed parameters.
     void setParameters(const Parameters & _params);

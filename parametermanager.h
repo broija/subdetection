@@ -29,6 +29,7 @@
 namespace SubDetection
 {
 
+/// Used to store a Parameters structure, save/load its values in/from a file.
 class SUBDETECTIONSHARED_EXPORT ParameterManager : public QObject
 {
     Q_OBJECT

@@ -217,6 +217,11 @@ void ParameterManager::setMatchRatio(double _ratio)
 
 //-------------------------
 
+/*!
+ * \brief ParameterManager::loadSettings
+ * \param _filename
+ * \return false if file doesn't exist, true if parameters were loaded.
+ */
 bool ParameterManager::loadSettings(const QString & _filename)
 {
     QFileInfo fileInfo(_filename);
