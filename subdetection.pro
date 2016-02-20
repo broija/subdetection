@@ -4,29 +4,35 @@
 #
 #-------------------------------------------------
 
-VERSION = 1.0.0
+VERSION = 3.0.0
 
 QT += gui
 
-TARGET = subdetection
+#CONFIG += release
+CONFIG += debug
 
-CONFIG += release
-#CONFIG += debug
+DEFINES += "DEBUG_LEVEL=0x1"
 
 #Uncomment this to build an executable and test the library
-#CONFIG += SUB_APP
+#CONFIG += TEST_PARAM_DETECTION
+CONFIG += TEST_DETECTION
 
-SUB_APP {
-DEFINES += SUBDETECTION_APP
-TEMPLATE = app
+TEST_PARAM_DETECTION | TEST_DETECTION {
+    DEFINES += SUBDETECTION_APP
+    TEMPLATE = app
 } else {
-TEMPLATE = lib
+    TARGET = subdetection
+    TEMPLATE = lib
+
+    DEFINES += SUBDETECTION_LIBRARY
 }
 
-DEFINES += SUBDETECTION_LIBRARY
-DEFINES += _tagBLOB_DEFINED
+build_pass:CONFIG(debug, debug|release) {
+    unix: TARGET = $$join(TARGET,,,_debug)
+    else: TARGET = $$join(TARGET,,,d)
+}
 
-#DEFINES += DEEP_DEBUG
+DEFINES += _tagBLOB_DEFINED
 
 PROJECT_DIR = D:/prog/c++/projets
 IMAGE_PROCESSING_DIR = D:/prog/traitement_image
@@ -43,13 +49,13 @@ TESSERACT_INC_DIR = $$TESSERACT_DIR
 TESSERACT_LIB_DIR = $$OCR_DIR/tesseract_output/bin
 
 win32 {
-CONFIG += console
+    CONFIG += console
 
-LIBS += $$IMAGE_PROCESSING_DIR/tuto/tesseract3.dll
+    LIBS += $$IMAGE_PROCESSING_DIR/tuto/tesseract3.dll
 
-LIBS += $$OPENCV_LIB_DIR/libopencv_core249.dll
-LIBS += $$OPENCV_LIB_DIR/libopencv_imgproc249.dll
-LIBS += $$OPENCV_LIB_DIR/libopencv_highgui249.dll
+    LIBS += $$OPENCV_LIB_DIR/libopencv_core249.dll
+    LIBS += $$OPENCV_LIB_DIR/libopencv_imgproc249.dll
+    LIBS += $$OPENCV_LIB_DIR/libopencv_highgui249.dll
 }
 
 INCLUDEPATH += .
@@ -60,17 +66,35 @@ INCLUDEPATH += $$TESSERACT_INC_DIR/ccstruct
 INCLUDEPATH += $$TESSERACT_INC_DIR/ccutil
 DEPENDPATH = $$INCLUDEPATH
 
-SUB_APP {
-SOURCES += main.cpp
+TEST_PARAM_DETECTION {
+    TARGET = test_subdetection_param
+    #to be defined
+    SOURCES += main_param_detection.cpp
 }
+
+TEST_DETECTION {
+    TARGET = test_subdetection
+    SOURCES += main_detection.cpp
+}
+
+SOURCES += blob.cpp
+SOURCES += statistical_tools.cpp
+SOURCES += blobmanager.cpp
+SOURCES += contourmanager.cpp
 SOURCES += conversion.cpp
+SOURCES += hash.cpp
 SOURCES += detector.cpp
 SOURCES += hsv.cpp
 SOURCES += opticalcharrecognizer.cpp
 SOURCES += parametermanager.cpp
 SOURCES += subdetection_init.cpp
 
+HEADERS += blob.h
+HEADERS += statistical_tools.h
+HEADERS += blobmanager.h
+HEADERS += contourmanager.h
 HEADERS += conversion.h
+HEADERS += hash.h
 HEADERS += deepdebug.h
 HEADERS += detector.h
 HEADERS += hsv.h

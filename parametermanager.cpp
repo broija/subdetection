@@ -50,7 +50,8 @@ const QString SETTING_MATCH_RATIO = "match_ratio";
 }//namespace
 
 ParameterManager::ParameterManager():
-    m_notify(true)
+    m_notify(true),
+    m_pParams(QSharedPointer<Parameters>(new Parameters))
 {
 }//ParameterManager
 
@@ -58,69 +59,76 @@ ParameterManager::ParameterManager():
 
 ParameterManager::ParameterManager(const Parameters & _params):
     m_notify(true),
-    m_params(_params)
+    m_pParams(QSharedPointer<Parameters>(new Parameters(_params)))
 {
-}//ParameterManager
+}//ParameterManager const Parameters &
+
+//-------------------------
+
+ParameterManager::ParameterManager(const QSharedPointer<Parameters> & _pParams)
+{
+    m_pParams = _pParams;
+}//ParameterManager const QSharedPointer<Parameters> &
 
 //-------------------------
 
 void ParameterManager::setParameters(const Parameters & _params)
 {
-    m_params = _params;
+    m_pParams = QSharedPointer<Parameters>(new Parameters(_params));
 
     changeNotification();
 }//setParameters
 
 //-------------------------
 
-void ParameterManager::setHsvMinHue(int _hue)
+void ParameterManager::setHsvMinHue(Hsv::Hue _hue)
 {
-    m_params.hsvMin.setHue(_hue);
+    m_pParams->hsvMin.setHue(_hue);
 
     changeNotification();
 }//setHsvMinHue
 
 //-------------------------
 
-void ParameterManager::setHsvMinSat(int _sat)
+void ParameterManager::setHsvMinSat(Hsv::Saturation _sat)
 {
-    m_params.hsvMin.setSaturation(_sat);
+    m_pParams->hsvMin.setSaturation(_sat);
 
     changeNotification();
 }//setHsvMinSat
 
 //-------------------------
 
-void ParameterManager::setHsvMinVal(int _val)
+void ParameterManager::setHsvMinVal(Hsv::Value _val)
 {
-    m_params.hsvMin.setValue(_val);
+    m_pParams->hsvMin.setValue(_val);
 
     changeNotification();
 }//setHsvMinVal
 
 //-------------------------
 
-void ParameterManager::setHsvMaxHue(int _hue)
+void ParameterManager::setHsvMaxHue(Hsv::Hue _hue)
 {
-    m_params.hsvMax.setHue(_hue);
+    m_pParams->hsvMax.setHue(_hue);
 
     changeNotification();
 }//setHsvMaxHue
 
 //-------------------------
 
-void ParameterManager::setHsvMaxSat(int _sat)
+void ParameterManager::setHsvMaxSat(Hsv::Saturation _sat)
 {
-    m_params.hsvMax.setSaturation(_sat);
+    m_pParams->hsvMax.setSaturation(_sat);
 
     changeNotification();
 }//setHsvMaxSat
 
 //-------------------------
 
-void ParameterManager::setHsvMaxVal(int _val)
+void ParameterManager::setHsvMaxVal(Hsv::Value _val)
 {
-    m_params.hsvMax.setValue(_val);
+    m_pParams->hsvMax.setValue(_val);
 
     changeNotification();
 }//setHsvMaxVal
@@ -129,7 +137,7 @@ void ParameterManager::setHsvMaxVal(int _val)
 
 void ParameterManager::setZoneX(int _x)
 {
-    m_params.zone.x = _x;
+    m_pParams->zone.x = _x;
 
     changeNotification();
 }//setZoneX
@@ -138,7 +146,7 @@ void ParameterManager::setZoneX(int _x)
 
 void ParameterManager::setZoneY(int _y)
 {
-    m_params.zone.y = _y;
+    m_pParams->zone.y = _y;
 
     changeNotification();
 }//setZoneY
@@ -147,7 +155,7 @@ void ParameterManager::setZoneY(int _y)
 
 void ParameterManager::setZoneWidth(int _width)
 {
-    m_params.zone.width = _width;
+    m_pParams->zone.width = _width;
 
     changeNotification();
 }//setZoneWidth
@@ -156,7 +164,7 @@ void ParameterManager::setZoneWidth(int _width)
 
 void ParameterManager::setZoneHeight(int _height)
 {
-    m_params.zone.height = _height;
+    m_pParams->zone.height = _height;
 
     changeNotification();
 }//setZoneHeight
@@ -165,7 +173,7 @@ void ParameterManager::setZoneHeight(int _height)
 
 void ParameterManager::setCharMaxWidth(int _width)
 {
-    m_params.charMaxSize.width = _width;
+    m_pParams->charMaxSize.width = _width;
 
     changeNotification();
 }//setCharMaxWidth
@@ -174,7 +182,7 @@ void ParameterManager::setCharMaxWidth(int _width)
 
 void ParameterManager::setCharMaxHeight(int _height)
 {
-    m_params.charMaxSize.height = _height;
+    m_pParams->charMaxSize.height = _height;
 
     changeNotification();
 }//setCharMaxHeight
@@ -183,7 +191,7 @@ void ParameterManager::setCharMaxHeight(int _height)
 
 void ParameterManager::setThresh(int _thresh)
 {
-    m_params.thresh = _thresh;
+    m_pParams->thresh = _thresh;
 
     changeNotification();
 }//setThresh
@@ -192,7 +200,7 @@ void ParameterManager::setThresh(int _thresh)
 
 void ParameterManager::setXTolerance(int _tolerance)
 {
-    m_params.xTolerance = _tolerance;
+    m_pParams->xTolerance = _tolerance;
 
     changeNotification();
 }//setXTolerance
@@ -201,7 +209,7 @@ void ParameterManager::setXTolerance(int _tolerance)
 
 void ParameterManager::setYTolerance(int _tolerance)
 {
-    m_params.yTolerance = _tolerance;
+    m_pParams->yTolerance = _tolerance;
 
     changeNotification();
 }//setYTolerance
@@ -210,7 +218,7 @@ void ParameterManager::setYTolerance(int _tolerance)
 
 void ParameterManager::setMatchRatio(double _ratio)
 {
-    m_params.matchRatio = _ratio;
+    m_pParams->matchRatio = _ratio;
 
     changeNotification();
 }//setMatchRatio
@@ -295,47 +303,47 @@ void ParameterManager::saveSettings(const QString & _filename)
     {
       settings.beginGroup(SETTING_GROUP_MIN);
       {
-          settings.setValue(SETTING_HUE,m_params.hsvMin.hue());
-          settings.setValue(SETTING_SAT,m_params.hsvMin.saturation());
-          settings.setValue(SETTING_VAL,m_params.hsvMin.value());
+          settings.setValue(SETTING_HUE,m_pParams->hsvMin.hue());
+          settings.setValue(SETTING_SAT,m_pParams->hsvMin.saturation());
+          settings.setValue(SETTING_VAL,m_pParams->hsvMin.value());
       }settings.endGroup();//min
 
       settings.beginGroup(SETTING_GROUP_MAX);
       {
-          settings.setValue(SETTING_HUE,m_params.hsvMax.hue());
-          settings.setValue(SETTING_SAT,m_params.hsvMax.saturation());
-          settings.setValue(SETTING_VAL,m_params.hsvMax.value());
+          settings.setValue(SETTING_HUE,m_pParams->hsvMax.hue());
+          settings.setValue(SETTING_SAT,m_pParams->hsvMax.saturation());
+          settings.setValue(SETTING_VAL,m_pParams->hsvMax.value());
       }settings.endGroup();//max
     }settings.endGroup();//HSV
 
     settings.beginGroup(SETTING_GROUP_ZONE);
     {
-        settings.setValue(SETTING_X,m_params.zone.x);
-        settings.setValue(SETTING_Y,m_params.zone.y);
-        settings.setValue(SETTING_WIDTH,m_params.zone.width);
-        settings.setValue(SETTING_HEIGHT,m_params.zone.height);
+        settings.setValue(SETTING_X,m_pParams->zone.x);
+        settings.setValue(SETTING_Y,m_pParams->zone.y);
+        settings.setValue(SETTING_WIDTH,m_pParams->zone.width);
+        settings.setValue(SETTING_HEIGHT,m_pParams->zone.height);
     }settings.endGroup();//Zone
 
     settings.beginGroup(SETTING_GROUP_CHAR_MAX_SIZE);
     {
-        settings.setValue(SETTING_WIDTH,m_params.charMaxSize.width);
-        settings.setValue(SETTING_HEIGHT,m_params.charMaxSize.height);
+        settings.setValue(SETTING_WIDTH,m_pParams->charMaxSize.width);
+        settings.setValue(SETTING_HEIGHT,m_pParams->charMaxSize.height);
     }settings.endGroup();//Char max size
 
     settings.beginGroup(SETTING_GROUP_EDGE_DETECTION);
     {
-        settings.setValue(SETTING_THRESH,m_params.thresh);
+        settings.setValue(SETTING_THRESH,m_pParams->thresh);
     }settings.endGroup();//Edge detection
 
     settings.beginGroup(SETTING_GROUP_TOLERANCE);
     {
-        settings.setValue(SETTING_X,m_params.xTolerance);
-        settings.setValue(SETTING_Y,m_params.yTolerance);
+        settings.setValue(SETTING_X,m_pParams->xTolerance);
+        settings.setValue(SETTING_Y,m_pParams->yTolerance);
     }settings.endGroup();//Tolerance
 
     settings.beginGroup(SETTING_GROUP_SIMILARITY_DETECTION);
     {
-        settings.setValue(SETTING_MATCH_RATIO,m_params.matchRatio);
+        settings.setValue(SETTING_MATCH_RATIO,m_pParams->matchRatio);
     }settings.endGroup();//Similarity detection
 
 }//saveSettings
@@ -344,7 +352,7 @@ void ParameterManager::saveSettings(const QString & _filename)
 #if SUBDETECTION_NOTIFY_PARAM_CHANGE
 void ParameterManager::changeNotification() const
 {
-    if (m_notify) emit parameterChanged(m_params);
+    if (m_notify) emit parameterChanged(*m_pParams);
 }//changeNotification
 #endif//SUBDETECTION_NOTIFY_PARAM_CHANGE
 //-------------------------

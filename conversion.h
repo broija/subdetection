@@ -20,8 +20,6 @@
 #ifndef SUBDETECTION_CONVERSION_H
 #define SUBDETECTION_CONVERSION_H
 
-#include <QColor>
-
 #include "subdetection_global.h"
 
 namespace cv {class Mat;}
@@ -32,17 +30,19 @@ class QByteArray;
 template <typename>
 class QVector;
 
+#include "types.h"
+
 namespace SubDetection
 {
+
+//class Hsv;
 
 enum ImageFormat {RGB32,///< RGB - 32bit
                   ARGB32,///< ARGB - 32bit
                   Gray8///< Grayscale - 8bit
                  };
 
-typedef QVector<QRgb> ColorTable;
-
-const ColorTable & getGray8ColorTable();
+const RgbTable & getGray8RgbTable();
 
 //Qt to OpenCV
 template <ImageFormat format_>
@@ -57,6 +57,8 @@ template <ImageFormat format_>
 void SUBDETECTIONSHARED_EXPORT matToImage(const cv::Mat & _mat, QImage & _image);///< No check is done. Be sure that the template format matches '_mat' format.
 template <ImageFormat format_>
 void SUBDETECTIONSHARED_EXPORT matToPixmap(const cv::Mat & _mat, QPixmap & _pixmap);///< No check is done. Be sure that the template format matches '_mat' format.
+
+void SUBDETECTIONSHARED_EXPORT hsvToColor(const Hsv & _hsv, QColor & _color);///< Converts a Hsv to QColor
 
 }//namespace SubDetection
 

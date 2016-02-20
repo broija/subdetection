@@ -33,7 +33,7 @@ void init()
     qRegisterMetaType<Parameters>("Parameters");
     qRegisterMetaType<SubDetection::Parameters>("SubDetection::Parameters");
 
-    getGray8ColorTable();///< Initializing grayscale color table.
+    getGray8RgbTable();///< Initializing grayscale color table.
 }//init
 
 }//SubDetection

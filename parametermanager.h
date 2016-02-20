@@ -21,6 +21,7 @@
 #define SUBDETECTION_PARAMETERMANAGER_H
 
 #include <QObject>
+#include <QSharedPointer>
 
 #include "parameters.h"
 
@@ -37,22 +38,24 @@ class SUBDETECTIONSHARED_EXPORT ParameterManager : public QObject
 public:
     ParameterManager();
     ParameterManager(const Parameters & _params);
+    ParameterManager(const QSharedPointer<Parameters> & _pParams);
 
-    Parameters & parameters() {return m_params;}///< Returns a reference to the Parameters structure.
-    const Parameters & constParameters() const {return m_params;}///< Returns a const reference to the Parameters structure.
+    QSharedPointer<Parameters> & parameters() {return m_pParams;}
+//    Parameters & parameters() {return m_params;}///< Returns a reference to the Parameters structure.
+//    const Parameters & constParameters() const {return m_params;}///< Returns a const reference to the Parameters structure.
 
 public slots:
     void setParameters(const Parameters & _params);
 
     //HSV Min
-    void setHsvMinHue(int _hue);
-    void setHsvMinSat(int _sat);
-    void setHsvMinVal(int _val);
+    void setHsvMinHue(Hsv::Hue _hue);
+    void setHsvMinSat(Hsv::Saturation _sat);
+    void setHsvMinVal(Hsv::Value _val);
 
     //HSV Max
-    void setHsvMaxHue(int _hue);
-    void setHsvMaxSat(int _sat);
-    void setHsvMaxVal(int _val);
+    void setHsvMaxHue(Hsv::Hue _hue);
+    void setHsvMaxSat(Hsv::Saturation _sat);
+    void setHsvMaxVal(Hsv::Value _val);
 
     //Detection zone
     void setZoneX(int _x);
@@ -91,7 +94,7 @@ protected:
     void changeNotification() const {}
 #endif//SUBDETECTION_NOTIFY_PARAM_CHANGE
 
-    Parameters m_params;
+    QSharedPointer<Parameters> m_pParams;
 private:
     Q_DISABLE_COPY(ParameterManager)
 };//ParameterManager

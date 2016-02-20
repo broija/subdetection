@@ -1,5 +1,5 @@
 /*!
-    Copyright 2014 Broija
+    Copyright 2016 Broija
 
     This file is part of subdetection library.
 
@@ -16,32 +16,40 @@
     You should have received a copy of the GNU General Public License
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef TST_SUBDETECTIONSTATISTICAL_H
+#define TST_SUBDETECTIONSTATISTICAL_H
 
-#ifndef SUBDETECTION_DEEPDEBUG_H
-#define SUBDETECTION_DEEPDEBUG_H
+#include <QtTest>
 
-#if DEBUG_LEVEL >= 3
-#define deepDebug3   qDebug
-#define deepWarning3 qWarning
-#else
-#define deepDebug3(...)
-#define deepWarning3(...)
-#endif//DEBUG_LEVEL == 3
+#include "hsv.h"
 
-#if DEBUG_LEVEL >= 2
-#define deepDebug2   qDebug
-#define deepWarning2 qWarning
-#else
-#define deepDebug2(...)
-#define deepWarning2(...)
-#endif//DEBUG_LEVEL == 2
+typedef SubDetection::Hsv Hsv;
 
-#if DEBUG_LEVEL >= 1
-    #define deepDebug   qDebug
-    #define deepWarning qWarning
-#else
-    #define deepDebug(...)
-    #define deepWarning(...)
-#endif//DEBUG_LEVEL == 1
+class SubDetectionTest : public QObject
+{
+    Q_OBJECT
 
-#endif // DEEPDEBUG_H
+public:
+    SubDetectionTest();
+
+private Q_SLOTS:
+    void hsvDefaultConstructor();
+
+    void hsvConstructor_data();
+    void hsvConstructor();
+
+    void averageHsv_data();
+    void averageHsv();
+
+    void averageHsvList_data();
+    void averageHsvList();
+
+    void medianHsvList_data();
+    void medianHsvList();
+
+//    void cleanupTestCase();
+};//SubDetectionTest
+
+Q_DECLARE_METATYPE(Hsv)
+
+#endif // TST_SUBDETECTIONSTATISTICAL_H

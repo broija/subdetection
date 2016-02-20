@@ -22,7 +22,9 @@
 
 #include "subdetection_global.h"
 
-#include "types.h"
+#include <opencv2/core/core.hpp>
+
+class QString;
 
 namespace SubDetection
 {
@@ -36,24 +38,40 @@ class SUBDETECTIONSHARED_EXPORT Hsv
 {
 public:
     typedef int Type;
+    typedef Type Hue;
+    typedef Type Saturation;
+    typedef Type Value;
 
     Hsv();
-    Hsv(Type _h, Type _s, Type _v);
+    Hsv(Hue _h, Saturation _s, Value _v);
 
-    Type hue() const {return m_hue;}
-    Type saturation() const {return m_sat;}
-    Type value() const {return m_val;}
+    Hue hue() const {return m_hue;}
+    Saturation saturation() const {return m_sat;}
+    Value value() const {return m_val;}
 
-    void setHue(Type _h);
-    void setSaturation(Type _s);
-    void setValue(Type _v);
+    void setHue(Hue _h);
+    void setSaturation(Saturation _s);
+    void setValue(Value _v);
+
+    void saveMinima(const Hsv & _other);
+    void saveMaxima(const Hsv & _other);
+
+    void toMin();
+    void toMax();
+
+    void from(cv::Vec3b & _source);
 
     Scalar toScalar() const;
+    QString toString() const;
+
+    Hsv & operator =(const Hsv & _other);
+    bool operator ==(const Hsv & _other) const;
+    bool operator !=(const Hsv & _other) const;
 
 protected:
-    Type m_hue;
-    Type m_sat;
-    Type m_val;
+    Hue m_hue;
+    Saturation m_sat;
+    Value m_val;
 };//Hsv
 
 }//namespace SubDetection

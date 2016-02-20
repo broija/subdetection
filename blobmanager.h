@@ -17,52 +17,20 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SUBDETECTION_TYPES_H
-#define SUBDETECTION_TYPES_H
+#ifndef SUBDETECTION_BLOBMANAGER_H
+#define SUBDETECTION_BLOBMANAGER_H
 
-#include <vector>
-#include <QtGlobal>
-#include <QColor>
-#include <QList>
-
-#include <opencv2/core/core.hpp>
-
-#include "hsv.h"
+#include "contourmanager.h"
 
 namespace SubDetection
 {
 
-typedef cv::Rect Rect;
-typedef std::vector<Rect> RectVector;
-
-typedef cv::Point Point;
-typedef std::vector<Point> PointVector;
-
-typedef cv::Size Size;
-
-typedef cv::Scalar Scalar;
-
-typedef cv::Mat Mat;
-
-typedef int Thresh;
-
-typedef double MatchRatio;
-
-typedef QList<Hsv> HsvList;
-
-typedef QVector<QRgb> RgbTable;
-
-typedef std::vector<cv::Point> Contour;
-typedef std::vector<Contour> ContourVector;
-
-typedef Contour Curve;
-
-typedef cv::Vec4i HierarchyItem;
-typedef std::vector<HierarchyItem> Hierarchy;
-
-typedef ContourVector::size_type Index;
-typedef std::vector<Index> IndexVector;
+class BlobManager : public ContourManager
+{
+public:
+    BlobManager();
+};//BlobManager
 
 }//namespace SubDetection
 
-#endif // SUBDETECTION_TYPES_H
+#endif // SUBDETECTION_BLOBMANAGER_H

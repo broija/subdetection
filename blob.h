@@ -1,5 +1,5 @@
 /*!
-    Copyright 2014 Broija
+    Copyright 2015 Broija
 
     This file is part of subdetection library.
 
@@ -17,31 +17,34 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SUBDETECTION_DEEPDEBUG_H
-#define SUBDETECTION_DEEPDEBUG_H
+#ifndef SUBDETECTION_BLOB_H
+#define SUBDETECTION_BLOB_H
 
-#if DEBUG_LEVEL >= 3
-#define deepDebug3   qDebug
-#define deepWarning3 qWarning
-#else
-#define deepDebug3(...)
-#define deepWarning3(...)
-#endif//DEBUG_LEVEL == 3
+#include "hsv.h"
+#include "types.h"
 
-#if DEBUG_LEVEL >= 2
-#define deepDebug2   qDebug
-#define deepWarning2 qWarning
-#else
-#define deepDebug2(...)
-#define deepWarning2(...)
-#endif//DEBUG_LEVEL == 2
+namespace SubDetection
+{
 
-#if DEBUG_LEVEL >= 1
-    #define deepDebug   qDebug
-    #define deepWarning qWarning
-#else
-    #define deepDebug(...)
-    #define deepWarning(...)
-#endif//DEBUG_LEVEL == 1
+struct SUBDETECTIONSHARED_EXPORT Blob
+{
+    Hsv hsvMin;
+    Hsv hsvMax;
+    Hsv hsvMedian;
 
-#endif // DEEPDEBUG_H
+    Rect bounding;
+
+    Point massCenter;
+/*
+    ContourVector contours;
+    Hierarchy hierarchy;
+*/
+
+    Mat mat;
+
+    Blob & operator =(const Blob & _other);
+};//Blob
+
+}//namespace Blob
+
+#endif // SUBDETECTION_BLOB_H

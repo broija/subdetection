@@ -17,31 +17,13 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SUBDETECTION_DEEPDEBUG_H
-#define SUBDETECTION_DEEPDEBUG_H
+#include "blobmanager.h"
 
-#if DEBUG_LEVEL >= 3
-#define deepDebug3   qDebug
-#define deepWarning3 qWarning
-#else
-#define deepDebug3(...)
-#define deepWarning3(...)
-#endif//DEBUG_LEVEL == 3
+namespace SubDetection
+{
 
-#if DEBUG_LEVEL >= 2
-#define deepDebug2   qDebug
-#define deepWarning2 qWarning
-#else
-#define deepDebug2(...)
-#define deepWarning2(...)
-#endif//DEBUG_LEVEL == 2
+BlobManager::BlobManager()
+{
+}//BlobManager
 
-#if DEBUG_LEVEL >= 1
-    #define deepDebug   qDebug
-    #define deepWarning qWarning
-#else
-    #define deepDebug(...)
-    #define deepWarning(...)
-#endif//DEBUG_LEVEL == 1
-
-#endif // DEEPDEBUG_H
+}//namespace SubDetection

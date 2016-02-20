@@ -52,7 +52,7 @@ struct SUBDETECTIONSHARED_EXPORT Parameters
     Point::value_type xTolerance;///< Delta X max between mass centers on a single line.
     Point::value_type yTolerance;///< Delta Y max between mass centers on a single line.
 
-    MatchRatio matchRatio;///< Ratio to consider that 2 text zones are similar. 0 < ratio < 1.
+    MatchRatio matchRatio;///< Ratio to consider that two text zones are similar. 0 < ratio < 1.
 };//Parameters
 
 }//namespace SubDetection

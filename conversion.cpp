@@ -25,19 +25,21 @@
 
 #include <opencv2/core/core.hpp>
 
+#include "hsv.h"
+
 namespace SubDetection
 {
 
 //-------------------------
 
 /*!
- * \brief getGray8ColorTable
+ * \brief getGray8RgbTable
  * \return A color table used for grayscale QImage. Don't forger to call "init" early, specifically if you use threads in your program.
  */
-const ColorTable & getGray8ColorTable()
+const RgbTable & getGray8RgbTable()
 {
     static bool s_init = false;
-    static ColorTable s_table(256);
+    static RgbTable s_table(256);
 
     if (!s_init)
     {
@@ -50,7 +52,7 @@ const ColorTable & getGray8ColorTable()
     }//if (!s_init)
 
     return s_table;
-}//getGray8ColorTable
+}//getGray8RgbTable
 
 //-------------------------
 
@@ -168,7 +170,7 @@ template <>
 void matToImage<Gray8>(const cv::Mat & _mat, QImage & _image)
 {
     _image = QImage(_mat.data,_mat.cols,_mat.rows,_mat.step,QImage::Format_Indexed8);
-    _image.setColorTable(getGray8ColorTable());
+    _image.setColorTable(getGray8RgbTable());
 }//matToImage Gray8
 
 //-------------------------
@@ -181,6 +183,13 @@ void matToPixmap<Gray8>(const cv::Mat & _mat, QPixmap & _pixmap)
 
     _pixmap = QPixmap::fromImage(tmpImage);
 }//matToPixmap RGB32
+
+//-------------------------
+
+void hsvToColor(const Hsv & _hsv, QColor & _color)
+{
+    _color.setHsv(_hsv.hue() * 2,_hsv.saturation(),_hsv.value());
+}//hsvToColor
 
 //-------------------------
 
