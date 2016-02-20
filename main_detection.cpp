@@ -29,11 +29,14 @@ Simple test file for subdetection library.
 #include <QSharedPointer>
 #include <QStringList>
 
+#include "hsv.h"
 #include "subdetection_init.h"
 #include "opticalcharrecognizer.h"
 #include "parameters.h"
 #include "detector.h"
 #include "parametermanager.h"
+#include "statistical_tools.h"
+#include "blob.h"
 
 struct CallbackHelper
 {
@@ -42,9 +45,12 @@ struct CallbackHelper
 
     cv::Mat mat;
     SubDetection::Detector detector;
+
+    SubDetection::Hsv selectedHsv;
 };//CallbackHelper
 
 void canny_callback(int, void * _pHelper);
+void mouse_callback(int _event, int _x, int _y, int, void * _pHelper);
 
 int main(int argc, char** argv)
 {
@@ -55,7 +61,7 @@ int main(int argc, char** argv)
     CallbackHelper callbackHelper(".","eng");
 
     const char * image_filename;
-    const char * config_filename = "params.ini";
+    const char * config_filename;
 
     bool paramsLoaded = false;
 
@@ -71,8 +77,6 @@ int main(int argc, char** argv)
             std::cout << "Error while loading config file." << std::endl;
         }//if (!paramsLoaded)
 
-        //no break
-    case 2:
         image_filename = argv[1];
 
         callbackHelper.mat = cv::imread(image_filename,1);
@@ -84,23 +88,26 @@ int main(int argc, char** argv)
         }//if (callbackHelper.mat.data == NULL)
 
         break;
+    case 2:
     case 1:
-        std::cerr << "Image file name must be passed as first and mandatory argument. Config file is an optional, second argument." << std::endl;
+        std::cerr << "subdetection path/to/image/file path/to/config/file" << std::endl;
         return 1;
     }//switch (argc)
 
     cv::namedWindow("Control", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Original",cv::WINDOW_NORMAL);
 
-    SubDetection::Parameters * pParams = 0;
+    cv::setMouseCallback("Original",mouse_callback,&callbackHelper);
+
+    QSharedPointer<SubDetection::Parameters> pParams;
 
     if (paramsLoaded)
     {
-        pParams = &paramManager.parameters();
+        pParams = paramManager.parameters();
     }//if (paramsLoaded)
     else
     {
-        pParams = new SubDetection::Parameters();
+        pParams.reset(new SubDetection::Parameters);
 
         pParams->hsvMin.setHue(20);
         pParams->hsvMax.setHue(32);
@@ -180,6 +187,55 @@ void canny_callback(int, void * _pHelper)
         ++lineIndex;
     }//foreach (QString textLine, textLines)
 }//canny_callback
+
+//---------------------------------------------------------------------------
+
+void mouse_callback(int _event, int _x, int _y, int , void * _pHelper)
+{
+    CallbackHelper * pHelper = (CallbackHelper *)_pHelper;
+
+    switch (_event)
+    {
+    case cv::EVENT_LBUTTONDOWN:
+        {
+            qDebug("MLB X %d Y %d",_x,_y);
+            cv::Point pixel;
+            pixel.x = _x;
+            pixel.y = _y;
+            SubDetection::Blob blob;
+
+            SubDetection::Detector::ReturnCode result = pHelper->detector.getPointedBlob(pHelper->mat,pixel,blob);
+
+            switch (result)
+            {
+            case SubDetection::Detector::RC_OK:
+                {
+                    qDebug("Median HSV %s",qPrintable(blob.hsvMedian.toString()));
+                    break;
+                }//RC_OK
+            case SubDetection::Detector::RC_AMBIGUOUS:
+                {
+                    qDebug("Ambiguous result.");
+                    break;
+                }//RC_AMBIGUOUS
+            case SubDetection::Detector::RC_INCONSISTENT:
+                {
+                    qDebug("Inconsistent result.");
+                    break;
+                }//RC_INCONSISTENT
+            default:
+                break;
+            }//switch (result)
+
+            break;//EVENT_LBUTTONDOWN
+        }////EVENT_LBUTTONDOWN
+    case cv::EVENT_MOUSEMOVE:
+        {
+//            qDebug("X %d Y %d",_x,_y);
+            break;
+        }//EVENT_MOUSEMOVE
+    }//switch (_event)
+}//mouse_callback
 
 //---------------------------------------------------------------------------
 
