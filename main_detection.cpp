@@ -28,6 +28,7 @@ Simple test file for subdetection library.
 #include <QMap>
 #include <QSharedPointer>
 #include <QStringList>
+#include <QFileInfo>
 
 #include "hsv.h"
 #include "subdetection_init.h"
@@ -46,9 +47,14 @@ const int KEY_NONE = -1;
 const int KEY_ESCAPE = 27;
 const int KEY_D = 100;
 const int KEY_H = 104;
+const int KEY_L = 108;
+const int KEY_R = 114;
+const int KEY_S = 115;
 
 const char * DEFAULT_TESSERACT_PARENT_PATH = ".";
 const char * DEFAULT_LANGUAGE = "eng";
+
+const char * DEFAULT_CONFIG_FILE_PATH = "./subdetection_default.ini";
 }//namespace
 
 struct CallbackHelper
@@ -62,10 +68,20 @@ struct CallbackHelper
 //    SubDetection::Hsv selectedHsv;
 };//CallbackHelper
 
+//---------------------------------------------------------------------------
+
 //void cannyCallback(int, void * _pHelper);
 void mouseCallback(int _event, int _x, int _y, int, void * _pHelper);
 
+void displayMessage(const QString & _message, bool _endl = true);
 void displayHelp();
+
+bool loadSettings(SubDetection::ParameterManager & _paramManager, QString & _config_filename);
+void setDefaultSettings(QSharedPointer<SubDetection::Parameters> & _pParams, const cv::Mat & _mat);
+
+bool fileExists(QString & _filename);
+
+//---------------------------------------------------------------------------
 
 int main(int argc, char** argv)
 {
@@ -75,26 +91,25 @@ int main(int argc, char** argv)
 //    CallbackHelper callbackHelper;
     CallbackHelper callbackHelper(DEFAULT_TESSERACT_PARENT_PATH,DEFAULT_LANGUAGE);
 
-    const char * image_filename;
-    const char * config_filename;
+    QString image_filename;
+    QString config_filename;
 
     bool paramsLoaded = false;
+
+    QFileInfo defaultCfgFileInfo(DEFAULT_CONFIG_FILE_PATH);
+    QString defaultCfgPath = defaultCfgFileInfo.absoluteFilePath();
 
     switch (argc)
     {
     default:
     case 3:
         config_filename = argv[2];
-        paramsLoaded = paramManager.loadSettings(config_filename);
 
-        if (!paramsLoaded)
-        {
-            std::cout << "Error while loading config file." << std::endl;
-        }//if (!paramsLoaded)
+        paramsLoaded = loadSettings(paramManager,config_filename);
 
         image_filename = argv[1];
 
-        callbackHelper.mat = cv::imread(image_filename,1);
+        callbackHelper.mat = cv::imread(qPrintable(image_filename),1);
 
         if (callbackHelper.mat.data == NULL)
         {
@@ -122,42 +137,19 @@ int main(int argc, char** argv)
     }//if (paramsLoaded)
     else
     {
-        pParams.reset(new SubDetection::Parameters);
-
-        pParams->hsvMin.setHue(20);
-        pParams->hsvMax.setHue(32);
-
-        pParams->hsvMin.setSaturation(155);
-        pParams->hsvMax.setSaturation(255);
-
-        pParams->hsvMin.setValue(160);
-        pParams->hsvMax.setValue(255);
-
-        pParams->charMaxSize = cv::Size(20,20);
-        pParams->yTolerance = pParams->charMaxSize.height;
-        pParams->xTolerance = 25;
-
-        int x, y, width, height;
-
-        x = static_cast<int>(callbackHelper.mat.cols * 0.10);
-        y = static_cast<int>(callbackHelper.mat.rows * 0.85);
-        width = static_cast<int>(callbackHelper.mat.cols * 0.8);
-        height = static_cast<int>(callbackHelper.mat.rows * 0.15);
-
-        pParams->zone = cv::Rect(x,y,width,height);
-        pParams->thresh = 65;
+         setDefaultSettings(pParams,callbackHelper.mat);
     }//if (paramsLoaded)...else
 
-    std::cout << "Use Canny trackbar to detect text." << std::endl
-              << "Be sure that all detection parameters fit the type of subtitle in your image." << std::endl
-              << "A window should pop with a blue rectangle, representing the detection zone." << std::endl
-              << "If text has been detected, you should see red rectangles in this blue rectangle." << std::endl;
+    displayMessage("Use Canny trackbar to detect text.");
+    displayMessage("Be sure that all detection parameters fit the type of subtitle in your image.");
+    displayMessage("A window should pop with a blue rectangle, representing the detection zone.");
+    displayMessage("If text has been detected, you should see red rectangles in this blue rectangle.");
 
-    std::cout << "Text detection zone: "
-              << "x:" << pParams->zone.x << ", "
-              << "y:" << pParams->zone.y << ", "
-              << "w:" << pParams->zone.width << ", "
-              << "h:" << pParams->zone.height << std::endl << std::endl;
+    displayMessage(QString("Text detection zone: x: %1, y: %2, w: %3, h: %4")
+                   .arg(pParams->zone.x)
+                   .arg(pParams->zone.y)
+                   .arg(pParams->zone.width)
+                   .arg(pParams->zone.height));
 
     displayHelp();
 
@@ -166,6 +158,7 @@ int main(int argc, char** argv)
     cv::imshow("Original", callbackHelper.mat); //show the original image
 
     QStringList textLines;
+    int lineIndex;
 
     bool end = false;
 
@@ -182,15 +175,30 @@ int main(int argc, char** argv)
             }//KEY_ESCAPE
         case KEY_D://'D' key
             {
-                callbackHelper.detector.detect(callbackHelper.mat,textLines);
+                textLines.clear();
 
-                int lineIndex = 0;
+                SubDetection::Detector::ReturnCode result = callbackHelper.detector.detect(callbackHelper.mat,textLines);
 
-                foreach (QString textLine, textLines)
+                switch (result)
                 {
-                    qDebug("Line %d: %s",lineIndex,qPrintable(textLine));
-                    ++lineIndex;
-                }//foreach (QString textLine, textLines)
+                case SubDetection::Detector::RC_NO_CHANGE:
+                    displayMessage("Change parameters and reload them before launching a detection.");
+                    break;
+                default:
+                    break;
+                case SubDetection::Detector::RC_OK:
+                    displayMessage(" +++ Text detected +++");
+
+                    lineIndex = 0;
+                    foreach (QString textLine, textLines)
+                    {
+                        displayMessage(QString("Line %1: %2")
+                                       .arg(lineIndex++)
+                                       .arg(textLine));
+                    }//foreach (QString textLine, textLines)
+                    break;
+                }//switch (result)
+
                 break;
             }//KEY_D
         case KEY_H://'H' key
@@ -198,6 +206,22 @@ int main(int argc, char** argv)
                 displayHelp();
                 break;
             }//KEY_H
+        case KEY_R:
+            {
+                loadSettings(paramManager,config_filename);
+                break;
+            }//KEY_R
+        case KEY_S:
+            {
+                displayMessage(QString("Saving default config to %1").arg(defaultCfgPath));
+
+                setDefaultSettings(pParams,callbackHelper.mat);
+                callbackHelper.detector.setParameters(pParams);
+
+                paramManager.saveSettings(defaultCfgPath);
+
+                break;
+            }//KEY_R
         case KEY_NONE://no key pressed
             {
                 break;
@@ -209,8 +233,6 @@ int main(int argc, char** argv)
             }//default
         }//switch (key)
     }//while (!end)
-
-    paramManager.saveSettings(config_filename);
 
     return 0;
 }//main
@@ -266,12 +288,91 @@ void mouseCallback(int _event, int _x, int _y, int , void * _pHelper)
 
 //---------------------------------------------------------------------------
 
+void displayMessage(const QString & _message, bool _endl)
+{
+    std::cout << qPrintable(_message);
+
+    if (_endl) std::cout << std::endl;
+}//displayMessage
+
+//---------------------------------------------------------------------------
+
 void displayHelp()
 {
-    std::cout << "When focus is on image window:" << std::endl;
-    std::cout << " - press 'D' to detect text." << std::endl;
-    std::cout << " - press 'Esc' to quit." << std::endl;
-    std::cout << " - press 'H' to display this help message." << std::endl;
+    displayMessage("");
+    displayMessage("******* HELP *******");
+    displayMessage("When focus is on image window, following commands are available by pressing associated key:");
+    displayMessage(" - text detection : 'D'.");
+    displayMessage(" - reload settings : 'R'.");
+    displayMessage(" - save default settings file : 'S'.");
+    displayMessage(" - quit : 'Esc'.");
+    displayMessage(" - display this help message : 'H'.");
+    displayMessage("******* !HELP *******");
 }//displayHelp
 
 //---------------------------------------------------------------------------
+
+bool loadSettings(SubDetection::ParameterManager & _paramManager, QString & _config_filename)
+{
+    displayMessage("*** *** ***");
+    displayMessage(QString("Loading config file: %1").arg(_config_filename));
+    displayMessage("*** *** ***");
+
+    bool result = _paramManager.loadSettings(_config_filename);
+
+    if (!result)
+    {
+        qWarning("Error while loading config file.");
+    }//if (!result)
+
+    return result;
+}//loadSettings
+
+//---------------------------------------------------------------------------
+
+void setDefaultSettings(QSharedPointer<SubDetection::Parameters> & _pParams, const cv::Mat & _mat)
+{
+    _pParams.reset(new SubDetection::Parameters);
+
+    _pParams->hsvMin.setHue(20);
+    _pParams->hsvMax.setHue(32);
+
+    _pParams->hsvMin.setSaturation(155);
+    _pParams->hsvMax.setSaturation(255);
+
+    _pParams->hsvMin.setValue(160);
+    _pParams->hsvMax.setValue(255);
+
+    _pParams->charMaxSize = cv::Size(20,20);
+    _pParams->yTolerance = _pParams->charMaxSize.height;
+    _pParams->xTolerance = 25;
+
+    int x, y, width, height;
+
+    x = static_cast<int>(_mat.cols * 0.10);
+    y = static_cast<int>(_mat.rows * 0.85);
+    width = static_cast<int>(_mat.cols * 0.8);
+    height = static_cast<int>(_mat.rows * 0.15);
+
+    _pParams->zone = cv::Rect(x,y,width,height);
+    _pParams->thresh = 65;
+}//setDefaultSettings
+
+//---------------------------------------------------------------------------
+
+bool fileExists(QString & _filename)
+{
+    QFileInfo fileInfo(_filename);
+
+    bool result = fileInfo.exists();
+
+    if (!result)
+    {
+        displayMessage(QString("File %1 doesn't exist.").arg(_filename));
+    }//if (!result)
+
+    return result;
+}//fileExists
+
+//---------------------------------------------------------------------------
+
