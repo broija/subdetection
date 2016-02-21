@@ -38,6 +38,19 @@ Simple test file for subdetection library.
 #include "statistical_tools.h"
 #include "blob.h"
 
+#include "deepdebug.h"
+
+namespace
+{
+const int KEY_NONE = -1;
+const int KEY_ESCAPE = 27;
+const int KEY_D = 100;
+const int KEY_H = 104;
+
+const char * DEFAULT_TESSERACT_PARENT_PATH = ".";
+const char * DEFAULT_LANGUAGE = "eng";
+}//namespace
+
 struct CallbackHelper
 {
     CallbackHelper(){}
@@ -46,11 +59,13 @@ struct CallbackHelper
     cv::Mat mat;
     SubDetection::Detector detector;
 
-    SubDetection::Hsv selectedHsv;
+//    SubDetection::Hsv selectedHsv;
 };//CallbackHelper
 
-void canny_callback(int, void * _pHelper);
-void mouse_callback(int _event, int _x, int _y, int, void * _pHelper);
+//void cannyCallback(int, void * _pHelper);
+void mouseCallback(int _event, int _x, int _y, int, void * _pHelper);
+
+void displayHelp();
 
 int main(int argc, char** argv)
 {
@@ -58,7 +73,7 @@ int main(int argc, char** argv)
 
     SubDetection::ParameterManager paramManager;
 //    CallbackHelper callbackHelper;
-    CallbackHelper callbackHelper(".","eng");
+    CallbackHelper callbackHelper(DEFAULT_TESSERACT_PARENT_PATH,DEFAULT_LANGUAGE);
 
     const char * image_filename;
     const char * config_filename;
@@ -90,14 +105,14 @@ int main(int argc, char** argv)
         break;
     case 2:
     case 1:
-        std::cerr << "subdetection path/to/image/file path/to/config/file" << std::endl;
+        std::cerr << argv[0] << " path/to/image/file path/to/config/file" << std::endl;
         return 1;
     }//switch (argc)
 
-    cv::namedWindow("Control", cv::WINDOW_AUTOSIZE);
+//    cv::namedWindow("Control", cv::WINDOW_AUTOSIZE);
     cv::namedWindow("Original",cv::WINDOW_NORMAL);
 
-    cv::setMouseCallback("Original",mouse_callback,&callbackHelper);
+    cv::setMouseCallback("Original",mouseCallback,&callbackHelper);
 
     QSharedPointer<SubDetection::Parameters> pParams;
 
@@ -142,12 +157,15 @@ int main(int argc, char** argv)
               << "x:" << pParams->zone.x << ", "
               << "y:" << pParams->zone.y << ", "
               << "w:" << pParams->zone.width << ", "
-              << "h:" << pParams->zone.height << std::endl;
+              << "h:" << pParams->zone.height << std::endl << std::endl;
+
+    displayHelp();
 
     callbackHelper.detector.setParameters(pParams);
 
-    cv::createTrackbar("Canny:", "Control", &(pParams->thresh), 255, canny_callback, &callbackHelper);
     cv::imshow("Original", callbackHelper.mat); //show the original image
+
+    QStringList textLines;
 
     bool end = false;
 
@@ -157,10 +175,38 @@ int main(int argc, char** argv)
 
         switch (key)
         {
-        case 27:
-            end = true;
-            break;
-        //Put your own key behaviours here...
+        case KEY_ESCAPE://escape key
+            {
+                end = true;
+                break;
+            }//KEY_ESCAPE
+        case KEY_D://'D' key
+            {
+                callbackHelper.detector.detect(callbackHelper.mat,textLines);
+
+                int lineIndex = 0;
+
+                foreach (QString textLine, textLines)
+                {
+                    qDebug("Line %d: %s",lineIndex,qPrintable(textLine));
+                    ++lineIndex;
+                }//foreach (QString textLine, textLines)
+                break;
+            }//KEY_D
+        case KEY_H://'H' key
+            {
+                displayHelp();
+                break;
+            }//KEY_H
+        case KEY_NONE://no key pressed
+            {
+                break;
+            }//KEY_NONE
+        default:
+            {
+                deepDebug("KEY PRESSED %d",key);
+                break;
+            }//default
         }//switch (key)
     }//while (!end)
 
@@ -171,26 +217,7 @@ int main(int argc, char** argv)
 
 //---------------------------------------------------------------------------
 
-void canny_callback(int, void * _pHelper)
-{
-    CallbackHelper * pHelper = (CallbackHelper *)_pHelper;
-
-    QStringList textLines;
-
-    pHelper->detector.detect(pHelper->mat,textLines);
-
-    int lineIndex = 0;
-
-    foreach (QString textLine, textLines)
-    {
-        qDebug("Line %d: %s",lineIndex,qPrintable(textLine));
-        ++lineIndex;
-    }//foreach (QString textLine, textLines)
-}//canny_callback
-
-//---------------------------------------------------------------------------
-
-void mouse_callback(int _event, int _x, int _y, int , void * _pHelper)
+void mouseCallback(int _event, int _x, int _y, int , void * _pHelper)
 {
     CallbackHelper * pHelper = (CallbackHelper *)_pHelper;
 
@@ -235,9 +262,16 @@ void mouse_callback(int _event, int _x, int _y, int , void * _pHelper)
             break;
         }//EVENT_MOUSEMOVE
     }//switch (_event)
-}//mouse_callback
+}//mouseCallback
 
 //---------------------------------------------------------------------------
 
+void displayHelp()
+{
+    std::cout << "When focus is on image window:" << std::endl;
+    std::cout << " - press 'D' to detect text." << std::endl;
+    std::cout << " - press 'Esc' to quit." << std::endl;
+    std::cout << " - press 'H' to display this help message." << std::endl;
+}//displayHelp
 
-
+//---------------------------------------------------------------------------
