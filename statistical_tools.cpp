@@ -17,14 +17,15 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "statistical_tools.h"
+#include "hsv.h"
+#include "hsvlist.h"
 
-#include "types.h"
+#include "statistical_tools.h"
 
 namespace
 {
 
-inline bool hsvCompare(const SubDetection::Hsv & _first, const SubDetection::Hsv & _second)
+bool hsvCompare(const SubDetection::Hsv & _first, const SubDetection::Hsv & _second)
 {
     if (_first.hue() < _second.hue()) return true;
     if (_first.hue() > _second.hue()) return false;
@@ -44,7 +45,7 @@ inline bool hsvCompare(const SubDetection::Hsv & _first, const SubDetection::Hsv
 namespace SubDetection
 {
 
-/*! Returns the a Hsv with Hue, Saturation and Value being averages of the ones from _first and _second.*/
+/*! \brief Returns a Hsv with Hue, Saturation and Value being averages of the ones from _first and _second.*/
 Hsv average(const Hsv & _first, const Hsv & _second)
 {
     Hsv result;
@@ -58,7 +59,7 @@ Hsv average(const Hsv & _first, const Hsv & _second)
 
 //-------------------------
 
-/*! Returns the a Hsv with Hue, Saturation and Value being averages of the ones from Hsv in _table.*/
+/*! \brief Returns a Hsv with Hue, Saturation and Value being averages of the ones from Hsv in _table.*/
 Hsv average(const HsvList &_list)
 {
     Hsv result;
@@ -88,10 +89,10 @@ Hsv average(const HsvList &_list)
 
 //-------------------------
 
-/*! Returns the median value of the list. T must have an associated operator <.
-    The list is sorted:
-     - the middle item is returned if there are an odd count of items.
-     - the average value of the two midlle items is returned in case of even count.*/
+/*! \brief Returns the median Hsv value of _list.
+ *  The list is sorted:
+ *   - the middle item is returned if there is an odd count of items.
+ *   - the average value of the two midlle items is returned in case of even count.*/
 Hsv median(HsvList & _list)
 {
     Hsv result;
@@ -100,7 +101,7 @@ Hsv median(HsvList & _list)
 
     if (count)
     {
-        qSort(_list.begin(),_list.end(),hsvCompare);
+        std::sort(_list.begin(),_list.end(),hsvCompare);
 //        qSort(_list);
 
         int odd = count %2;
@@ -117,6 +118,8 @@ Hsv median(HsvList & _list)
     }//if (count)
 
     return result;
-}//median
+}//median HsvList
+
+//-------------------------
 
 }//SubDetection

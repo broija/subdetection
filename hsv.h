@@ -20,9 +20,10 @@
 #ifndef SUBDETECTION_HSV_H
 #define SUBDETECTION_HSV_H
 
-#include "subdetection_global.h"
-
 #include <opencv2/core/core.hpp>
+
+#include "subdetection_global.h"
+#include "hsvtypes.h"
 
 class QString;
 
@@ -37,6 +38,7 @@ typedef cv::Scalar Scalar;
 class SUBDETECTIONSHARED_EXPORT Hsv
 {
 public:
+    //Convenience type redeclaration
     typedef int Type;
     typedef Type Hue;
     typedef Type Saturation;

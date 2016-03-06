@@ -21,6 +21,8 @@
 Simple test file for subdetection library.
 */
 
+#define HSVBLOB 0
+
 #include <iostream>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -30,14 +32,17 @@ Simple test file for subdetection library.
 #include <QStringList>
 #include <QFileInfo>
 
+#include "statistical_tools.h"
 #include "hsv.h"
+#include "hsvlist.h"
 #include "subdetection_init.h"
 #include "opticalcharrecognizer.h"
 #include "parameters.h"
 #include "detector.h"
 #include "parametermanager.h"
-#include "statistical_tools.h"
-#include "blob.h"
+
+#include "hsvblob.h"
+#include "drawnblob.h"
 
 #include "deepdebug.h"
 
@@ -55,6 +60,9 @@ const char * DEFAULT_TESSERACT_PARENT_PATH = ".";
 const char * DEFAULT_LANGUAGE = "eng";
 
 const char * DEFAULT_CONFIG_FILE_PATH = "./subdetection_default.ini";
+
+const char * IMAGE_WINDOW_NAME = "Image";
+const char * BLOB_WINDOW_NAME = "Blob";
 }//namespace
 
 struct CallbackHelper
@@ -80,6 +88,8 @@ bool loadSettings(SubDetection::ParameterManager & _paramManager, QString & _con
 void setDefaultSettings(QSharedPointer<SubDetection::Parameters> & _pParams, const cv::Mat & _mat);
 
 bool fileExists(QString & _filename);
+
+bool showMessageForDetectorRC(SubDetection::Detector::ReturnCode _returnCode);
 
 //---------------------------------------------------------------------------
 
@@ -125,9 +135,10 @@ int main(int argc, char** argv)
     }//switch (argc)
 
 //    cv::namedWindow("Control", cv::WINDOW_AUTOSIZE);
-    cv::namedWindow("Original",cv::WINDOW_NORMAL);
+    cv::namedWindow(BLOB_WINDOW_NAME,cv::WINDOW_NORMAL);
 
-    cv::setMouseCallback("Original",mouseCallback,&callbackHelper);
+    cv::namedWindow(IMAGE_WINDOW_NAME,cv::WINDOW_NORMAL);
+    cv::setMouseCallback(IMAGE_WINDOW_NAME,mouseCallback,&callbackHelper);
 
     QSharedPointer<SubDetection::Parameters> pParams;
 
@@ -155,7 +166,7 @@ int main(int argc, char** argv)
 
     callbackHelper.detector.setParameters(pParams);
 
-    cv::imshow("Original", callbackHelper.mat); //show the original image
+    cv::imshow(IMAGE_WINDOW_NAME, callbackHelper.mat);//show the original image
 
     QStringList textLines;
     int lineIndex;
@@ -251,30 +262,30 @@ void mouseCallback(int _event, int _x, int _y, int , void * _pHelper)
             cv::Point pixel;
             pixel.x = _x;
             pixel.y = _y;
-            SubDetection::Blob blob;
 
-            SubDetection::Detector::ReturnCode result = pHelper->detector.getPointedBlob(pHelper->mat,pixel,blob);
+            SubDetection::HsvBlob::Pointer pHsvBlob(new SubDetection::HsvBlob);
+            SubDetection::DrawnBlob::Pointer pDrawnBlob(new SubDetection::DrawnBlob);
 
-            switch (result)
+            SubDetection::Detector::ReturnCode result;
+
+            SubDetection::Detector::BlobPtr pBlob;
+
+            pBlob = qSharedPointerCast<SubDetection::Blob>(pDrawnBlob);
+            result = pHelper->detector.getPointedBlob(pHelper->mat,pixel,pBlob);
+
+            if (showMessageForDetectorRC(result))
             {
-            case SubDetection::Detector::RC_OK:
-                {
-                    qDebug("Median HSV %s",qPrintable(blob.hsvMedian.toString()));
-                    break;
-                }//RC_OK
-            case SubDetection::Detector::RC_AMBIGUOUS:
-                {
-                    qDebug("Ambiguous result.");
-                    break;
-                }//RC_AMBIGUOUS
-            case SubDetection::Detector::RC_INCONSISTENT:
-                {
-                    qDebug("Inconsistent result.");
-                    break;
-                }//RC_INCONSISTENT
-            default:
-                break;
-            }//switch (result)
+                cv::imshow(BLOB_WINDOW_NAME,pDrawnBlob->drawnMat());
+            }//if (showMessageForDetectorRC(result))
+
+            pBlob = qSharedPointerCast<SubDetection::Blob>(pHsvBlob);
+
+            result = pHelper->detector.getPointedBlob(pHelper->mat,pixel,pBlob);
+
+            if (showMessageForDetectorRC(result))
+            {
+                qDebug("Median HSV %s",qPrintable(pHsvBlob->medianHsv().toString()));
+            }//if (showMessageForDetectorRC(result))
 
             break;//EVENT_LBUTTONDOWN
         }////EVENT_LBUTTONDOWN
@@ -360,6 +371,7 @@ void setDefaultSettings(QSharedPointer<SubDetection::Parameters> & _pParams, con
 
 //---------------------------------------------------------------------------
 
+/// Checks if _filename exists.
 bool fileExists(QString & _filename)
 {
     QFileInfo fileInfo(_filename);
@@ -376,3 +388,35 @@ bool fileExists(QString & _filename)
 
 //---------------------------------------------------------------------------
 
+/*! Show a message according to Detector return code.
+    Returns true if _returnCode is RC_OK.*/
+bool showMessageForDetectorRC(SubDetection::Detector::ReturnCode _returnCode)
+{
+    bool result = false;
+
+    switch (_returnCode)
+    {
+    case SubDetection::Detector::RC_OK:
+        {
+            qDebug("OK!");
+            result = true;
+            break;
+        }//RC_OK
+    case SubDetection::Detector::RC_AMBIGUOUS:
+        {
+            qDebug("Ambiguous result.");
+            break;
+        }//RC_AMBIGUOUS
+    case SubDetection::Detector::RC_INCONSISTENT:
+        {
+            qDebug("Inconsistent result.");
+            break;
+        }//RC_INCONSISTENT
+    default:
+        break;
+    }//switch (_returnCode)
+
+    return result;
+}//detectorRCMessage
+
+//---------------------------------------------------------------------------

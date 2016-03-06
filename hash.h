@@ -1,9 +1,16 @@
 #ifndef SUBDETECTION_HASH_H
 #define SUBDETECTION_HASH_H
 
-#include "types.h"
+#include <QtGlobal>
+
+class Point;
+
+namespace cv
+{
 
 //Needed for internal use
-uint qHash(const SubDetection::Point & _point);
+uint qHash(const Point & _point);
+
+}//cv
 
 #endif // SUBDETECTION_HASH_H

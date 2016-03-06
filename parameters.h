@@ -21,7 +21,6 @@
 #define SUBDETECTION_PARAMETERS_H
 
 #include "subdetection_global.h"
-
 #include "hsv.h"
 #include "types.h"
 

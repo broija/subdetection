@@ -20,8 +20,6 @@
 #ifndef SUBDETECTION_DETECTOR_H
 #define SUBDETECTION_DETECTOR_H
 
-#include "hash.h"
-
 #include <QSharedPointer>
 
 #include "subdetection_global.h"
@@ -35,7 +33,7 @@ class QImage;
 namespace SubDetection
 {
 
-struct Blob;
+class Blob;
 
 /*!
  * \brief The Detector class. Subtitle detection class based on Tesseract-OCR.
@@ -43,6 +41,8 @@ struct Blob;
 class SUBDETECTIONSHARED_EXPORT Detector
 {
 public:
+    typedef QSharedPointer<Blob> BlobPtr;
+
     enum ReturnCode
     {
         RC_OK,///< Success.
@@ -79,7 +79,7 @@ public:
 
     ReturnCode detect(const Mat & _image, QStringList & _subtitles);
 
-    ReturnCode getPointedBlob(const Mat & _image, const Point & _point, SubDetection::Blob & _blob);
+    ReturnCode getPointedBlob(const Mat & _image, const Point & _point, BlobPtr & _pBlob);
 
 //    ReturnCode getSelectionParameters(const Rect & _roi, Parameters & _params);
 
@@ -104,8 +104,10 @@ protected:
 
     void getTextBoundingRects(const ContourVector & _contours, RectVector & _rects);
 
-    ReturnCode setBlobMat(const Mat & _image, SubDetection::Blob & _blob);
-    ReturnCode getPointedBlob(const Point & _point, SubDetection::Blob & _blob);
+    void blobContourSetup(ContourManager::Attributes & _cmAttributes);
+
+    ReturnCode setBlobMat(const Mat & _image);
+    ReturnCode getPointedBlob(const ContourManager::Attributes & _cmAttributes, const Point & _point, BlobPtr & _pBlob);
 
     QSharedPointer<Parameters> m_pParams;
 
@@ -118,6 +120,8 @@ protected:
     Mat m_grayMat;
     Mat m_contourMat;
     Mat m_boundingsMat;
+
+    Mat m_blobMat;
 
     RectVector m_boundingRects;
 

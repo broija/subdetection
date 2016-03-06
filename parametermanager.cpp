@@ -17,11 +17,12 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "parametermanager.h"
-
 #include <QSettings>
 #include <QString>
 #include <QFileInfo>
+
+#include "parameters.h"
+#include "parametermanager.h"
 
 namespace SubDetection
 {

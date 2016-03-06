@@ -22,15 +22,17 @@
 
 #include "subdetection_global.h"
 
-namespace cv {class Mat;}
 class QImage;
 class QPixmap;
 class QByteArray;
+class QColor;
 
 template <typename>
 class QVector;
 
-#include "types.h"
+class Mat;
+class Hsv;
+class RgbTable;
 
 namespace SubDetection
 {
@@ -46,17 +48,17 @@ const RgbTable & getGray8RgbTable();
 
 //Qt to OpenCV
 template <ImageFormat format_>
-void SUBDETECTIONSHARED_EXPORT imageToMat(QImage & _image, cv::Mat & _mat, bool _shareMem = false);///< No check is done. Be sure that the template format matches '_image' format.
+void SUBDETECTIONSHARED_EXPORT imageToMat(QImage & _image, Mat & _mat, bool _shareMem = false);///< No check is done. Be sure that the template format matches '_image' format.
 template <ImageFormat format_>
-void SUBDETECTIONSHARED_EXPORT pixmapToMat(const QPixmap & _pixmap, cv::Mat & _mat);///< No check is done. Be sure that the template format matches '_pixmap' format.
+void SUBDETECTIONSHARED_EXPORT pixmapToMat(const QPixmap & _pixmap, Mat & _mat);///< No check is done. Be sure that the template format matches '_pixmap' format.
 template <ImageFormat format_>
-void SUBDETECTIONSHARED_EXPORT byteArrayToMat(const QByteArray & _data, cv::Mat & _mat);///< No check is done. Be sure that the template format matches '_data' format.
+void SUBDETECTIONSHARED_EXPORT byteArrayToMat(const QByteArray & _data, Mat & _mat);///< No check is done. Be sure that the template format matches '_data' format.
 
 //OpenCV to Qt
 template <ImageFormat format_>
-void SUBDETECTIONSHARED_EXPORT matToImage(const cv::Mat & _mat, QImage & _image);///< No check is done. Be sure that the template format matches '_mat' format.
+void SUBDETECTIONSHARED_EXPORT matToImage(const Mat & _mat, QImage & _image);///< No check is done. Be sure that the template format matches '_mat' format.
 template <ImageFormat format_>
-void SUBDETECTIONSHARED_EXPORT matToPixmap(const cv::Mat & _mat, QPixmap & _pixmap);///< No check is done. Be sure that the template format matches '_mat' format.
+void SUBDETECTIONSHARED_EXPORT matToPixmap(const Mat & _mat, QPixmap & _pixmap);///< No check is done. Be sure that the template format matches '_mat' format.
 
 void SUBDETECTIONSHARED_EXPORT hsvToColor(const Hsv & _hsv, QColor & _color);///< Converts a Hsv to QColor
 

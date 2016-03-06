@@ -17,9 +17,12 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "opticalcharrecognizer.h"
+#include <QString>
 
 #include "deepdebug.h"
+#include "types.h"
+
+#include "opticalcharrecognizer.h"
 
 namespace SubDetection
 {
@@ -47,7 +50,7 @@ void OpticalCharRecognizer::setImage(const uchar * _image, int _width, int _heig
 
 //-------------------------
 
-void OpticalCharRecognizer::setImage(const cv::Mat & _image)
+void OpticalCharRecognizer::setImage(const Mat & _image)
 {
     m_tess.SetImage((uchar*)_image.data,_image.cols,_image.rows,_image.elemSize(),_image.elemSize() * _image.cols);
 }//setImage
@@ -61,7 +64,7 @@ void OpticalCharRecognizer::setRectangle(int _x, int _y, int _width, int _height
 
 //-------------------------
 
-void OpticalCharRecognizer::setRectangle(const cv::Rect &_rect)
+void OpticalCharRecognizer::setRectangle(const Rect &_rect)
 {
     m_tess.SetRectangle(_rect.x,_rect.y,_rect.width,_rect.height);
 }//setRectangle

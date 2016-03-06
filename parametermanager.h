@@ -23,12 +23,15 @@
 #include <QObject>
 #include <QSharedPointer>
 
-#include "parameters.h"
+#include "subdetection_global.h"
+#include "hsvtypes.h"
 
 #define SUBDETECTION_NOTIFY_PARAM_CHANGE 1
 
 namespace SubDetection
 {
+
+class Parameters;
 
 /// Used to store a Parameters structure, save/load its values in/from a file.
 class SUBDETECTIONSHARED_EXPORT ParameterManager : public QObject
@@ -48,14 +51,14 @@ public slots:
     void setParameters(const Parameters & _params);
 
     //HSV Min
-    void setHsvMinHue(Hsv::Hue _hue);
-    void setHsvMinSat(Hsv::Saturation _sat);
-    void setHsvMinVal(Hsv::Value _val);
+    void setHsvMinHue(Hue _hue);
+    void setHsvMinSat(Saturation _sat);
+    void setHsvMinVal(Value _val);
 
     //HSV Max
-    void setHsvMaxHue(Hsv::Hue _hue);
-    void setHsvMaxSat(Hsv::Saturation _sat);
-    void setHsvMaxVal(Hsv::Value _val);
+    void setHsvMaxHue(Hue _hue);
+    void setHsvMaxSat(Saturation _sat);
+    void setHsvMaxVal(Value _val);
 
     //Detection zone
     void setZoneX(int _x);

@@ -1,5 +1,5 @@
 /*!
-    Copyright 2014 Broija
+    Copyright 2016 Broija
 
     This file is part of subdetection library.
 
@@ -17,13 +17,16 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "blobmanager.h"
+#include "statistical_tools.h"
+
+#include "hsvlist.h"
 
 namespace SubDetection
 {
 
-BlobManager::BlobManager()
+Hsv HsvList::median()
 {
-}//BlobManager
+    return SubDetection::median(*this);
+}//median
 
-}//namespace SubDetection
+}//SubDetection

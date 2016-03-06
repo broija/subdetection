@@ -17,9 +17,9 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "contourmanager.h"
-
 #include <opencv2/imgproc/imgproc.hpp>
+
+#include "contourmanager.h"
 
 #define SD_DETECT_EDGE_CANNY 0
 #define SD_DETECT_EDGE_BLUR 0
@@ -85,6 +85,22 @@ void ContourManager::children(const Hierarchy & _hierarchy, int _parentIndex, In
 
 //-------------------------
 
+void ContourManager::children(const ContourVector & _contours, const Hierarchy & _hierarchy, int _parentIndex, ContourVector & _children)
+{
+    _children.clear();
+
+    int currentChild = _hierarchy[_parentIndex][HIERARCHY_INDEX_FIRST_CHILD];//First child
+
+    while (currentChild >= 0)
+    {
+        _children.push_back(_contours.at(currentChild));
+
+        currentChild = _hierarchy[currentChild][HIERARCHY_INDEX_NEXT];
+    }//while (currentChild >= 0)
+}//children
+
+//-------------------------
+
 /*!
  * \brief childCount Returns the number of children for the given contour. No control is made.
  * \param _hierarchy OpenCV contour hierarchy used to find children.
@@ -126,7 +142,8 @@ void ContourManager::massCenter(const Contour & _contour, Point & _massCenter)
 ContourManager::ContourManager():
     m_binThresh(DEFAULT_BIN_THRESH),
     m_cvRetrievalMode(DEFAULT_CONTOUR_RETRIEVAL_MODE),
-    m_cvApproxMethod(DEFAULT_CONTOUR_APPROX_METHOD)
+    m_cvApproxMethod(DEFAULT_CONTOUR_APPROX_METHOD),
+    m_lastFlags(SFNone)
 {
 }//ContourManager
 
@@ -139,7 +156,8 @@ ContourManager::ContourManager():
 ContourManager::ContourManager(Thresh _binThresh):
     m_binThresh(_binThresh),
     m_cvRetrievalMode(DEFAULT_CONTOUR_RETRIEVAL_MODE),
-    m_cvApproxMethod(DEFAULT_CONTOUR_APPROX_METHOD)
+    m_cvApproxMethod(DEFAULT_CONTOUR_APPROX_METHOD),
+    m_lastFlags(SFNone)
 {
 }//ContourManager Thresh
 
@@ -153,7 +171,8 @@ ContourManager::ContourManager(Thresh _binThresh):
 ContourManager::ContourManager(int _cvRetrievalMode, int _cvApproxMethod):
     m_binThresh(DEFAULT_BIN_THRESH),
     m_cvRetrievalMode(_cvRetrievalMode),
-    m_cvApproxMethod(_cvApproxMethod)
+    m_cvApproxMethod(_cvApproxMethod),
+    m_lastFlags(SFNone)
 {
 }//ContourManager int int
 
@@ -169,7 +188,8 @@ ContourManager::ContourManager(int _cvRetrievalMode, int _cvApproxMethod):
 ContourManager::ContourManager(Thresh _binThresh, int _cvRetrievalMode, int _cvApproxMethod):
     m_binThresh(_binThresh),
     m_cvRetrievalMode(_cvRetrievalMode),
-    m_cvApproxMethod(_cvApproxMethod)
+    m_cvApproxMethod(_cvApproxMethod),
+    m_lastFlags(SFNone)
 {
 }//ContourManager Thresh int int bool
 
@@ -208,14 +228,14 @@ void ContourManager::setApproxMethod(int _cvApproxMethod)
 
 //-------------------------
 
-void ContourManager::contours(ContourVector & _contours)
+void ContourManager::contours(ContourVector & _contours) const
 {
     _contours = m_tempContours;
 }//contours
 
 //-------------------------
 
-void ContourManager::contours(ContourVector & _contours, Hierarchy & _hierarchy)
+void ContourManager::contours(ContourVector & _contours, Hierarchy & _hierarchy) const
 {
     contours(_contours);
     _hierarchy = m_tempHierarchy;
@@ -227,7 +247,7 @@ void ContourManager::contours(ContourVector & _contours, Hierarchy & _hierarchy)
  * \brief boundingRects : populate _rects with the ones found after a call to process.
  * \param _rects Output rect list.
  */
-void ContourManager::boundingRects(RectVector & _rects)
+void ContourManager::boundingRects(RectVector & _rects) const
 {
     _rects = m_tempBoundings;
 }//boundingRects
@@ -238,26 +258,49 @@ void ContourManager::boundingRects(RectVector & _rects)
  * \brief massCenters Use this function to retrieve the mass centers after a call to process.
  * \param _massCenters Output mass centers.
  */
-void ContourManager::massCenters(PointVector & _massCenters)
+void ContourManager::massCenters(PointVector & _massCenters) const
 {
     _massCenters = m_tempMassCenters;
 }//massCenters
 
 //-------------------------
 
-void ContourManager::process(Mat & _mat, ComputeFlags _flags)
+/*!
+ * \brief attributes Fill _attributes with last computed items. Must be called after process.
+ * \param _attributes Output attributes.*/
+void ContourManager::attributes(Attributes & _attributes) const
+{
+    _attributes.flags = m_lastFlags;
+
+    if (m_lastFlags & SFHierarchy)
+        contours(_attributes.contours,_attributes.hierarchy);
+    else
+        contours(_attributes.contours);
+
+    if (m_lastFlags & SFBoundings)
+        boundingRects(_attributes.boundings);
+
+    if (m_lastFlags & SFMassCenters)
+        massCenters(_attributes.massCenters);
+}//attributes
+
+//-------------------------
+
+void ContourManager::process(Mat & _mat, SelectionFlags _flags)
 {
     setImage(_mat);
 
-    if (_flags & CFHierarchy)
+    m_lastFlags = _flags;
+
+    if (_flags & SFHierarchy)
         buildContours(m_tempContours,m_tempHierarchy);
     else
         buildContours(m_tempContours);
 
-    if (_flags & CFBoundings)
+    if (_flags & SFBoundings)
         buildBoundings(m_tempContours,m_tempBoundings);
 
-    if (_flags & CFMassCenters)
+    if (_flags & SFMassCenters)
         buildMassCenters(m_tempContours,m_tempMassCenters);
 }//process Mat
 
@@ -268,7 +311,7 @@ void ContourManager::process(Mat & _mat, ComputeFlags _flags)
  * \param _mat Input image.
  * \param _flags Computing parameters.
  */
-void ContourManager::process(const Mat & _mat, ComputeFlags _flags)
+void ContourManager::process(const Mat & _mat, SelectionFlags _flags)
 {
     process(_mat.clone(),_flags);
 }//process const Mat

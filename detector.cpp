@@ -17,14 +17,11 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "detector.h"
-
 #define SD_MASKED_TYPES 0
 
 #define SD_TEST_DRAW 1
 #define SD_TEST_DRAW_RESULT 1
 #define SD_TEST_DRAW_BOUNDINGS_SEPARATE 0
-#define SD_TEST_DRAW_CONTOUR_SEPARATE 0
 
 #define SD_TEST_CENTERED 0
 
@@ -42,7 +39,12 @@
 
 #include "deepdebug.h"
 #include "blob.h"
-#include "statistical_tools.h"
+#include "hsvblob.h"
+
+#include "hash.h"
+#include "types.h"
+
+#include "detector.h"
 
 namespace SubDetection
 {
@@ -234,7 +236,7 @@ void Detector::forget()
  *        If Detector finds out that text has not changed, subtitles won't be searched. Call "forget"
  *        to bypass this behaviour.
  * \param _image
- * \param _subtitles detected text. If text has not changed, or Detector thinks so, _subtitles won't be modified.
+ * \param _subtitles detected text. If text has not changed, or at least if Detector thinks so, _subtitles won't be modified.
  */
 Detector::ReturnCode Detector::detect(const Mat & _image, QStringList & _subtitles)
 {
@@ -267,7 +269,7 @@ Detector::ReturnCode Detector::detect(const Mat & _image, QStringList & _subtitl
 //----HSV masking
     cv::cvtColor(m_originalMat,m_hsvMat,cv::COLOR_BGR2HSV);//HSV conversion
 
-    //Change desired colors into white
+    //Changing desired colors into white
     cv::inRange(m_hsvMat, m_pParams->hsvMin.toScalar(), m_pParams->hsvMax.toScalar(), m_threshMat);
 
     m_textZoneMat = m_threshMat(m_pParams->zone);
@@ -309,7 +311,7 @@ Detector::ReturnCode Detector::detect(const Mat & _image, QStringList & _subtitl
     m_contourManager.setRetrievalMode(CV_RETR_EXTERNAL);
     m_contourManager.setApproxMethod(CV_CHAIN_APPROX_SIMPLE);
 
-    m_contourManager.process(m_maskedMat,ContourManager::CFBoundings | ContourManager::CFMassCenters);
+    m_contourManager.process(m_maskedMat,ContourManager::SFBoundings | ContourManager::SFMassCenters);
 
     m_contourManager.contours(contours);
 
@@ -330,20 +332,29 @@ Detector::ReturnCode Detector::detect(const Mat & _image, QStringList & _subtitl
 //-------------------------
 
 /*!
- * \brief Detector::getPointedBlob : populate _blob attributes according to the blob at _point.
+ * \brief Detector::getPointedBlob : populates _pBlob attributes according to the blob at _point.
  * \param _image Input image.
- * \param _point Pixel pointed.
- * \param _blob Blob to be filled.
+ * \param _point Pointed pixel.
+ * \param _pBlob Pointer to Blob to be filled.
+ * \return ReturnCode RC_OK : valid result,
+ *                    RC_INVALID_INPUT_IMAGE,
+ *                    RC_BAD_PARAM : parameters are not set : thresh is needed,
+ *                    RC_AMBIGUOUS : two or more possible blobs,
+ *                    RC_INCONSISTENT : pointed blob is inconsistent.
  */
-Detector::ReturnCode Detector::getPointedBlob(const Mat & _image, const Point & _point, Blob & _blob)
+Detector::ReturnCode Detector::getPointedBlob(const Mat & _image, const Point & _point, BlobPtr & _pBlob)
 {
-    deepDebug("ORIGINAL IMAGE %dx%d",_image.cols,_image.rows);
+    deepDebug("Detector::getPointedBlob : original image %dx%d",_image.cols,_image.rows);
 
-    ReturnCode result = setBlobMat(_image,_blob);
+    ReturnCode result = setBlobMat(_image);
 
     if (result != RC_OK) return result;
 
-    return getPointedBlob(_point,_blob);
+    //Retrieving contours
+    ContourManager::Attributes cmAttributes;
+    blobContourSetup(cmAttributes);
+
+    return getPointedBlob(cmAttributes,_point,_pBlob);
 }//getPointedBlob
 
 //-------------------------
@@ -690,13 +701,30 @@ void Detector::getTextBoundingRects(const ContourVector &_contours, RectVector &
 
 //------------------------------
 
-Detector::ReturnCode Detector::setBlobMat(const Mat & _image, SubDetection::Blob & _blob)
+/*!
+ * \brief Detector::blobContourSetup Fill _cmAttributes with Blob detection parameters.
+ * \param _cmAttributes Output contour attributes.
+ */
+void Detector::blobContourSetup(ContourManager::Attributes & _cmAttributes)
+{
+    m_contourManager.setBinThresh(m_pParams->thresh);
+    m_contourManager.setRetrievalMode(CV_RETR_CCOMP);
+    m_contourManager.setApproxMethod(CV_CHAIN_APPROX_NONE);
+
+    m_contourManager.process(m_blobMat,ContourManager::SFBoundings | ContourManager::SFHierarchy);
+
+    m_contourManager.attributes(_cmAttributes);
+}//blobContourSetup
+
+//-------------------------
+
+Detector::ReturnCode Detector::setBlobMat(const Mat & _image)
 {
     ReturnCode result = checkImage(_image);
 
     if (result == RC_OK)
     {
-       _blob.mat = _image.clone();
+       m_blobMat = _image.clone();
     }//if (result == RC_OK)
 
     return result;
@@ -705,12 +733,13 @@ Detector::ReturnCode Detector::setBlobMat(const Mat & _image, SubDetection::Blob
 //-------------------------
 
 /*!
- * \brief Detector::getPointedBlob : populate _blob attributes according to the blob at _point.
+ * \brief Detector::getPointedBlob : populate _pBlob attributes according to the blob at _point.
  * \warning Be sure that setBlobMat has been called before.
+ * \param _cmAttributes Contours and bounding rects computed previously
  * \param _point Pixel pointed.
- * \param _blob Blob to be filled.
+ * \param _pBlob Pointer to Blob to be filled.
  */
-Detector::ReturnCode Detector::getPointedBlob(const Point & _point, SubDetection::Blob & _blob)
+Detector::ReturnCode Detector::getPointedBlob(const ContourManager::Attributes & _cmAttributes, const Point & _point, BlobPtr & _pBlob)
 {
     //Parameters must be set before
     if (!m_pParams)
@@ -721,23 +750,9 @@ Detector::ReturnCode Detector::getPointedBlob(const Point & _point, SubDetection
 
     deepDebug("POINT[%d,%d]",_point.x,_point.y);
 
-    ContourVector contours;
-    Hierarchy hierarchy;
-    RectVector boundingRects;
+    deepDebug("%d contour(s) retrieved.",_cmAttributes.contours.size());
 
-    //Retrieving contours
-    m_contourManager.setBinThresh(m_pParams->thresh);
-    m_contourManager.setRetrievalMode(CV_RETR_CCOMP);
-    m_contourManager.setApproxMethod(CV_CHAIN_APPROX_NONE);
-
-    m_contourManager.process(_blob.mat,ContourManager::CFBoundings | ContourManager::CFHierarchy);
-
-    m_contourManager.contours(contours,hierarchy);
-    m_contourManager.boundingRects(boundingRects);
-
-    deepDebug("%d contour(s) retrieved.",contours.size());
-
-    ContourVector::size_type contourSize = contours.size();
+    ContourVector::size_type contourSize = _cmAttributes.contours.size();
     ContourIndexList validIndexes;
 
     deepDebug("Retrieving contours which may contain the point...");
@@ -747,14 +762,14 @@ Detector::ReturnCode Detector::getPointedBlob(const Point & _point, SubDetection
     //First pass: retrieving contours which may contain _point.
     for (ContourVector::size_type i = 0; i < contourSize; ++i)
     {
-        if (boundingRects[i].contains(_point))
+        if (_cmAttributes.boundings[i].contains(_point))
         {
             deepDebug("  %d: X[%d] Y[%d] W[%d] H[%d]",
                       i,
-                      boundingRects[i].tl().x,
-                      boundingRects[i].tl().y,
-                      boundingRects[i].width,
-                      boundingRects[i].height);
+                      _cmAttributes.boundings[i].tl().x,
+                      _cmAttributes.boundings[i].tl().y,
+                      _cmAttributes.boundings[i].width,
+                      _cmAttributes.boundings[i].height);
             validIndexes.append(i);
         }//if (boundingRects[i].contains(_point))
     }//for (ContourVector::size_type i = 0; i < contourSize; ++i)
@@ -767,15 +782,15 @@ Detector::ReturnCode Detector::getPointedBlob(const Point & _point, SubDetection
     for (ContourIndexList::size_type i = 0; i < validIndexes.size();)
     {
         //_point is inside or on an edge?
-        if (cv::pointPolygonTest(contours[validIndexes.at(i)],_point,false) >= 0.)
+        if (cv::pointPolygonTest(_cmAttributes.contours[validIndexes.at(i)],_point,false) >= 0.)
         {
             deepDebug("  %d contains it!",validIndexes.at(i));
             ++i;
-        }//if (cv::pointPolygonTest(contours[i],_point,false) >= 0.)
+        }//if (cv::pointPolygonTest(_cmAttributes.contours[validIndexes.at(i)],_point,false) >= 0.)
         else
         {
             validIndexes.removeAt(i);
-        }//if (cv::pointPolygonTest(contours[i],_point,false) >= 0.)...else
+        }//if (cv::pointPolygonTest(_cmAttributes.contours[validIndexes.at(i)],_point,false) >= 0.)...else
     }//for (ContourIndexList::size_type i = 0; i < validIndexes.size();)
 
     //If no contour left, exit.
@@ -810,14 +825,15 @@ Detector::ReturnCode Detector::getPointedBlob(const Point & _point, SubDetection
         }//switch (m_bsbehavior)
 
         /*! Searching best candidate according chosen behavior.*/
-        bestChildCount = ContourManager::childCount(hierarchy,validIndexes.at(0));
+        bestChildCount = ContourManager::childCount(_cmAttributes.hierarchy,validIndexes.at(0));
         ContourIndexList::size_type chosenBlob = 0;
 
         deepDebug("Child count %d",bestChildCount);
 
+        /* Choosing best blob according to selected behavior.*/
         for (ContourIndexList::size_type i = 1; i < validIndexes.size(); ++i)
         {
-            childCount = ContourManager::childCount(hierarchy,validIndexes.at(i));
+            childCount = ContourManager::childCount(_cmAttributes.hierarchy,validIndexes.at(i));
 
             deepDebug("Child count %d",childCount);
 
@@ -838,111 +854,23 @@ Detector::ReturnCode Detector::getPointedBlob(const Point & _point, SubDetection
         validIndex = validIndexes.at(0);
     }//if (validIndexes.size() > 1)...else
 
-    //Copying to avoid multiple indexations during pixel loops.
-    Rect boundingRect = boundingRects[validIndex];
-    _blob.bounding = boundingRect;
+    //Copying to avoid multiple indexations.
+    Rect boundingRect = _cmAttributes.boundings[validIndex];
+    Contour contour = _cmAttributes.contours[validIndex];
 
-    deepDebug("BRECT TL %dx%d W %d H %d",boundingRect.tl().x,boundingRect.tl().y,boundingRect.width,boundingRect.height);
+    deepDebug("BRECT TL [%d,%d] W %d H %d",boundingRect.tl().x,boundingRect.tl().y,boundingRect.width,boundingRect.height);
 
     //If blob is too big, it's not worth getting it since detector is made to detect subtitles.
-    if (static_cast<float>(boundingRect.width) / static_cast<float>(_blob.mat.cols) > 0.20f
-     || static_cast<float>(boundingRect.height) / static_cast<float>(_blob.mat.rows) > 0.20f)
+    if (static_cast<float>(boundingRect.width) / static_cast<float>(m_blobMat.cols) > 0.20f
+     || static_cast<float>(boundingRect.height) / static_cast<float>(m_blobMat.rows) > 0.20f)
     {
         return RC_INCONSISTENT;
-    }//if (static_cast<float>(boundingRect.width) / static_cast<float>(_blob.mat.cols) > 0.25f...
+    }//if (static_cast<float>(boundingRect.width) / static_cast<float>(m_blobMat.cols) > 0.20f...
 
-    cv::cvtColor(_blob.mat,m_hsvMat,cv::COLOR_BGR2HSV);//HSV conversion
+    ContourVector children;
+    ContourManager::children(_cmAttributes.contours,_cmAttributes.hierarchy,validIndex,children);
 
-    Contour contour = contours[validIndex];
-    IndexVector childrenIndexes;
-    bool isInHole;
-
-    //Get children of the contour
-    ContourManager::children(hierarchy,validIndex,childrenIndexes);
-
-    IndexVector::size_type childrenCount = childrenIndexes.size();
-
-    Hsv hsvMin; hsvMin.toMax();
-    Hsv hsvMax; hsvMax.toMin();
-    Hsv hsvTmp;
-    HsvList hsvList;//To compute median Hsv.
-
-    //Can we retrieve blob attributes?
-    if (_blob.mat.cols && _blob.mat.rows)
-    {
-        cv::Scalar black = Scalar(0,0,0);
-
-        Point pixel;
-
-        for (int col = boundingRect.tl().x; col <= boundingRect.br().x; ++col)
-        {
-            pixel.x = col;
-            for (int row = boundingRect.tl().y; row <= boundingRect.br().y; ++row)
-            {
-                pixel.y = row;
-
-                int polygonTest = static_cast<int>(cv::pointPolygonTest(contour,pixel,false));
-
-                switch (polygonTest)
-                {
-                case -1:
-                    //Outside contour
-
-                    //Drawing black pixel
-                    cv::circle(_blob.mat,pixel,0,black);
-
-                    break;
-                case 1:
-                    //Inside contour
-                    isInHole = false;
-
-                    //Pixel is in one of the holes?
-                    for (IndexVector::size_type i = 0; i < childrenCount && !isInHole; ++i)
-                    {
-                        isInHole = (cv::pointPolygonTest(contours[childrenIndexes[i]],pixel,false) >= 0.);
-                    }//for (IndexVector::size_type i = 0; i < childrenCount && !isInHole; ++i)
-
-                    if (isInHole)
-                    {
-                        //Drawing black pixel
-                        cv::circle(_blob.mat,pixel,0,black);
-                    }//if (isInHole)
-                    else
-                    {
-                        //Pixel in blob, retrieving HSV parameters
-                        hsvTmp.from(m_hsvMat.at<cv::Vec3b>(pixel));
-
-                        hsvMin.saveMinima(hsvTmp);
-                        hsvMax.saveMaxima(hsvTmp);
-
-                        hsvList.append(hsvTmp);
-//                            deepDebug("HSV COUNT %d",hsvList.size());
-                    }//if (isInHole)...else
-
-                    break;
-                }//switch (polygonTest)
-            }//for (int row = boundingRect.tl().y; row <= boundingRect.br().y; ++row)
-        }//for (int col = boundingRect.tl().x; col <= boundingRect.br().x; ++col)
-
-        deepDebug("HSV:");
-        deepDebug("  min : %s",qPrintable(hsvMin.toString()));
-        deepDebug("  max : %s",qPrintable(hsvMax.toString()));
-        _blob.hsvMin = hsvMin;
-        _blob.hsvMax = hsvMax;
-
-        _blob.hsvMedian = median(hsvList);
-
-        deepDebug("  median : %s",qPrintable(_blob.hsvMedian.toString()));
-
-        ContourManager::massCenter(contour,_blob.massCenter);
-
-        //Crop
-        _blob.mat = _blob.mat(boundingRect);
-#if SD_TEST_DRAW_CONTOUR_SEPARATE
-        cv::namedWindow(WINDOW_NAME_SELECTED_CONTOUR, CV_WINDOW_NORMAL);
-        cv::imshow(WINDOW_NAME_SELECTED_CONTOUR, _blob.mat);
-#endif//SD_TEST_DRAW_CONTOUR_SEPARATE
-    }//if (_blob.mat.cols && _blob.mat.rows)
+    _pBlob->update(m_blobMat,boundingRect,contour,children);
 
     return RC_OK;
 }//getPointedBlob

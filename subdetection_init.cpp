@@ -17,13 +17,13 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "subdetection_init.h"
-
 #include <QMetaType>
 #include <QVector>
 
 #include "parameters.h"
 #include "conversion.h"
+
+#include "subdetection_init.h"
 
 namespace SubDetection
 {

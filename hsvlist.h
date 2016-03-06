@@ -1,5 +1,5 @@
 /*!
-    Copyright 2014 Broija
+    Copyright 2016 Broija
 
     This file is part of subdetection library.
 
@@ -17,20 +17,22 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SUBDETECTION_BLOBMANAGER_H
-#define SUBDETECTION_BLOBMANAGER_H
+#ifndef SUBDETECTION_HSVLIST_H
+#define SUBDETECTION_HSVLIST_H
 
-#include "contourmanager.h"
+#include <QList>
+
+#include "hsv.h"
 
 namespace SubDetection
 {
 
-class BlobManager : public ContourManager
+class HsvList : public QList<Hsv>
 {
 public:
-    BlobManager();
-};//BlobManager
+    Hsv median();
+};//HsvList
 
-}//namespace SubDetection
+}//SubDetection
 
-#endif // SUBDETECTION_BLOBMANAGER_H
+#endif // SUBDETECTION_HSVLIST_H

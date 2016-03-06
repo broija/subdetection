@@ -17,11 +17,11 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "hsv.h"
-
 #include <algorithm>
 
 #include <QString>
+
+#include "hsv.h"
 
 namespace SubDetection
 {

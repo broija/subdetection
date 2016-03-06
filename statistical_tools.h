@@ -21,17 +21,15 @@
 
 #include "subdetection_global.h"
 
-#include "hsv.h"
-#include "types.h"
-
 namespace SubDetection
 {
+class Hsv;
+class HsvList;
 
 SUBDETECTIONSHARED_EXPORT Hsv average(const Hsv & _first, const Hsv & _second);
 SUBDETECTIONSHARED_EXPORT Hsv average(const HsvList & _list);
 SUBDETECTIONSHARED_EXPORT Hsv median(HsvList & _list);
 
 }//namespace SubDetection
-
 
 #endif // SUBDETECTION_STAT_TOOLS_H

@@ -21,13 +21,8 @@
 #define SUBDETECTION_TYPES_H
 
 #include <vector>
-#include <QtGlobal>
-#include <QColor>
-#include <QList>
 
 #include <opencv2/core/core.hpp>
-
-#include "hsv.h"
 
 namespace SubDetection
 {
@@ -48,11 +43,7 @@ typedef int Thresh;
 
 typedef double MatchRatio;
 
-typedef QList<Hsv> HsvList;
-
-typedef QVector<QRgb> RgbTable;
-
-typedef std::vector<cv::Point> Contour;
+typedef std::vector<Point> Contour;
 typedef std::vector<Contour> ContourVector;
 
 typedef Contour Curve;

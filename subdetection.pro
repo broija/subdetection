@@ -4,7 +4,10 @@
 #
 #-------------------------------------------------
 
-VERSION = 3.0.0
+VERSION = 4.0.0
+
+#No C++ 11
+#QMAKE_CXXFLAGS += -std=c++0x
 
 QT += gui
 
@@ -77,30 +80,36 @@ TEST_DETECTION {
     SOURCES += main_detection.cpp
 }
 
-SOURCES += blob.cpp
-SOURCES += statistical_tools.cpp
-SOURCES += blobmanager.cpp
-SOURCES += contourmanager.cpp
-SOURCES += conversion.cpp
-SOURCES += hash.cpp
-SOURCES += detector.cpp
-SOURCES += hsv.cpp
-SOURCES += opticalcharrecognizer.cpp
-SOURCES += parametermanager.cpp
-SOURCES += subdetection_init.cpp
+SOURCES += blob.cpp \
+    contourmanager.cpp \
+    conversion.cpp \
+    detector.cpp \
+    drawnblob.cpp \
+    hash.cpp \
+    hsv.cpp \
+    hsvblob.cpp \
+    opticalcharrecognizer.cpp \
+    parametermanager.cpp \
+    statistical_tools.cpp \
+    subdetection_init.cpp \
+    hsvlist.cpp
 
-HEADERS += blob.h
-HEADERS += statistical_tools.h
-HEADERS += blobmanager.h
-HEADERS += contourmanager.h
-HEADERS += conversion.h
-HEADERS += hash.h
-HEADERS += deepdebug.h
-HEADERS += detector.h
-HEADERS += hsv.h
-HEADERS += opticalcharrecognizer.h
-HEADERS += parametermanager.h
-HEADERS += parameters.h
-HEADERS += subdetection_global.h
-HEADERS += subdetection_init.h
-HEADERS += types.h
+HEADERS += blob.h \
+    contourmanager.h \
+    conversion.h \
+    deepdebug.h \
+    detector.h \
+    drawnblob.h \
+    hash.h \
+    hsv.h \
+    hsvtypes.h \
+    hsvblob.h \
+    hsvlist.h \
+    opticalcharrecognizer.h \
+    parametermanager.h \
+    parameters.h \
+    rgbtable.h \
+    statistical_tools.h \
+    subdetection_global.h \
+    subdetection_init.h \
+    types.h

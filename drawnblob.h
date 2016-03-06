@@ -1,5 +1,5 @@
 /*!
-    Copyright 2014 Broija
+    Copyright 2016 Broija
 
     This file is part of subdetection library.
 
@@ -17,43 +17,43 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SUBDETECTION_OCR_H
-#define SUBDETECTION_OCR_H
-
-#include <QtGlobal>
-
-#include <api/baseapi.h>
+#ifndef SUBDETECTION_DRAWNBLOB_H
+#define SUBDETECTION_DRAWNBLOB_H
 
 #include "subdetection_global.h"
 
-class QString;
-class Rect;
-class Mat;
+#include "blob.h"
 
 namespace SubDetection
 {
 
-/*!
- * \brief The OpticalCharRecognizer class. Based on Tesseract-OCR.
- */
-class SUBDETECTIONSHARED_EXPORT OpticalCharRecognizer
+class SUBDETECTIONSHARED_EXPORT DrawnBlob : public Blob
 {
 public:
-    OpticalCharRecognizer(const QString & _tessdataParentPath, const QString & _lang);
-    ~OpticalCharRecognizer();
+    typedef QSharedPointer<DrawnBlob> Pointer;
 
-    void setImage(const uchar * _image, int _width, int _height, int _bytes_per_px, int _bytes_per_line);
-    void setImage(const Mat & _image);
+    DrawnBlob();
+    virtual ~DrawnBlob(){}
 
-    void setRectangle(int _x, int _y, int _width, int _height);
-    void setRectangle(const Rect & _rect);
+    void setBackgroundColor(cv::Scalar & _color);
+    cv::Scalar backgroundColor() const {return m_bgColor;}
 
-    QString getUtf8Text();
+    /// Returns Mat used to draw the blob.
+    Mat & drawnMat(){return m_drawnMat;}
 
 protected:
-    tesseract::TessBaseAPI m_tess;
-};//OpticalCharRecognizer
+    virtual void initialize();
 
-}//namespace SubDetection
+    virtual void inHole(const Point & _pixel);
+    virtual void outside(const Point & _pixel);
 
-#endif//SUBDETECTION_OCR_H
+    Mat m_drawnMat;
+    cv::Scalar m_bgColor;
+
+private:
+    Q_DISABLE_COPY(DrawnBlob)
+};//DrawnBlob
+
+}//SubDetection
+
+#endif // SUBDETECTION_DRAWNBLOB_H

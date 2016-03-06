@@ -17,8 +17,6 @@
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "conversion.h"
-
 #include <QImage>
 #include <QPixmap>
 #include <QByteArray>
@@ -26,6 +24,10 @@
 #include <opencv2/core/core.hpp>
 
 #include "hsv.h"
+#include "rgbtable.h"
+#include "types.h"
+
+#include "conversion.h"
 
 namespace SubDetection
 {
@@ -57,11 +59,11 @@ const RgbTable & getGray8RgbTable()
 //-------------------------
 
 template<>
-void imageToMat<RGB32>(QImage & _image, cv::Mat & _mat, bool _shareMem)
+void imageToMat<RGB32>(QImage & _image, Mat & _mat, bool _shareMem)
 {
 //    Q_ASSERT_X(_image.format() == QImage::Format_RGB32,"imageToMat<RGB32>","Invalid format.");
 
-    _mat = cv::Mat(_image.height(),_image.width(),
+    _mat = Mat(_image.height(),_image.width(),
                    CV_8UC4,
                    static_cast<uchar*>(_image.bits()),
                    _image.bytesPerLine());

@@ -23,7 +23,6 @@
 #include "subdetection_global.h"
 
 #include "types.h"
-//#include <QtGlobal>
 
 namespace SubDetection
 {
@@ -31,19 +30,31 @@ namespace SubDetection
 class SUBDETECTIONSHARED_EXPORT ContourManager
 {
 public:
-    enum ComputeFlag
+    enum SelectionFlag
     {
-        CFNone = 0x00,
-        CFBoundings = 0x01,
-        CFHierarchy = 0x02,
-        CFMassCenters = 0x04
-    };//ComputeFlag
+        SFNone = 0x00,
+        SFBoundings = 0x01,
+        SFHierarchy = 0x02,
+        SFMassCenters = 0x04
+    };//SelectionFlag
 
-    Q_DECLARE_FLAGS(ComputeFlags,ComputeFlag);
+    Q_DECLARE_FLAGS(SelectionFlags,SelectionFlag);
 
     static void children(const Hierarchy & _hierarchy, int _parentIndex, IndexVector & _children);
+    static void children(const ContourVector & _contours, const Hierarchy & _hierarchy, int _parentIndex, ContourVector & _children);
     static int childCount(const Hierarchy & _hierarchy, int _parentIndex);
     static void massCenter(const Contour & _contour, Point & _massCenter);
+
+    /// Helper to lighten methods and functions signatures.
+    struct Attributes
+    {
+        ContourVector contours;
+        Hierarchy hierarchy;
+        RectVector boundings;
+        PointVector massCenters;
+
+        SelectionFlags flags;
+    };//Attributes
 
     ContourManager();
     ContourManager(Thresh _binThresh);
@@ -57,13 +68,15 @@ public:
 
     void setHierarchySearch(bool _enabled);
 
-    void contours(ContourVector & _contours);
-    void contours(ContourVector & _contours, Hierarchy & _hierarchy);
-    void boundingRects(RectVector & _boundings);
-    void massCenters(PointVector & _massCenters);
+    void contours(ContourVector & _contours) const;
+    void contours(ContourVector & _contours, Hierarchy & _hierarchy) const;
+    void boundingRects(RectVector & _boundings) const;
+    void massCenters(PointVector & _massCenters) const;
 
-    void process(Mat & _mat, ComputeFlags _flags);
-    void process(const Mat & _mat, ComputeFlags _flags);
+    void attributes(Attributes & _attributes) const;
+
+    void process(Mat & _mat, SelectionFlags _flags);
+    void process(const Mat & _mat, SelectionFlags _flags);
 
 protected:
     void setImage(Mat & _mat);
@@ -89,10 +102,12 @@ protected:
     RectVector m_tempBoundings;
     PointVector m_tempMassCenters;
     Hierarchy m_tempHierarchy;
+
+    SelectionFlags m_lastFlags;
 };//ContourManager
 
 }//namespace SubDetection
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(SubDetection::ContourManager::ComputeFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(SubDetection::ContourManager::SelectionFlags)
 
 #endif // SUBDETECTION_CONTOURMANAGER_H

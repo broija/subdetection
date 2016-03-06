@@ -1,5 +1,5 @@
 /*!
-    Copyright 2014 Broija
+    Copyright 2016 Broija
 
     This file is part of subdetection library.
 
@@ -16,18 +16,18 @@
     You should have received a copy of the GNU General Public License
     along with subdetection library.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <QHash>
-#include <opencv2/core/core.hpp>
 
-#include "hash.h"
+#ifndef SUBDETECTION_RGBTABLE_H
+#define SUBDETECTION_RGBTABLE_H
 
-namespace cv
+#include <QColor>
+#include <QVector>
+
+namespace SubDetection
 {
 
-uint qHash(const Point & _point)
-{
-    // :: to help compiler understand that he must seek Qt qHash function elsewhere
-    return ::qHash(_point.x + _point.y);
-}//qHash
+typedef QVector<QRgb> RgbTable;
 
-}//cv
+}//SubDetection
+
+#endif // SUBDETECTION_RGBTABLE_H
