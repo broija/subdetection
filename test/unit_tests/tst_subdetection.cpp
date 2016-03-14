@@ -22,6 +22,7 @@
 #include <QString>
 
 #include "hsv.h"
+#include "hsvlist.h"
 #include "statistical_tools.h"
 
 //using namespace SubDetectionTest;

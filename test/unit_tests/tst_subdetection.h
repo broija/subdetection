@@ -22,8 +22,10 @@
 #include <QtTest>
 
 #include "hsv.h"
+#include "hsvlist.h"
 
 typedef SubDetection::Hsv Hsv;
+typedef SubDetection::HsvList HsvList;
 
 class SubDetectionTest : public QObject
 {
@@ -51,5 +53,6 @@ private Q_SLOTS:
 };//SubDetectionTest
 
 Q_DECLARE_METATYPE(Hsv)
+Q_DECLARE_METATYPE(HsvList)
 
 #endif // TST_SUBDETECTIONSTATISTICAL_H
