@@ -61,8 +61,12 @@ https://code.google.com/p/tesseract-ocr/downloads/list
 Tests
 -----
 
-Simply uncomment *#CONFIG += SUB_APP* in **subdetection.pro** file and build the project. It will generate an executable.
+Application
+___________
 
-You can pass it two arguments:
- - the image file you want to extract the subtitles from.
- - the configuration file (optional).
+A test project is available in test/app/ directory.
+
+Unit tests
+__________
+
+Available in test/unit_tests/ directory.
